@@ -1,0 +1,530 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProgramaÃ§Ã£o Semanal URFCC â€” ETM Engenharia</title>
+    <script type="module" crossorigin src="/assets/index-precisao-decimal-v9.js?v=anexo-bm-1"></script>
+    <link rel="modulepreload" crossorigin href="/assets/chunk-DseTPa7n.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DOTkhx35.css">
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+      (() => {
+        const fmtBRL = (v) => (v == null ? "-" : "R$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        const fmtPct = (v) => (v == null ? "-" : Number(v).toFixed(2).replace(".", ",") + "%");
+        let curva = [];
+        let tooltip;
+        let hideTimer;
+
+        function ensureTooltip() {
+          if (tooltip) return tooltip;
+          tooltip = document.createElement("div");
+          tooltip.style.cssText = "position:fixed;z-index:9999;display:none;min-width:260px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 12px 32px rgba(15,23,42,.18);padding:10px 12px;font:12px system-ui,-apple-system,Segoe UI,sans-serif;color:#1f2937;pointer-events:auto";
+          tooltip.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+          tooltip.addEventListener("mouseleave", scheduleHide);
+          document.body.appendChild(tooltip);
+          return tooltip;
+        }
+
+        function ensureSidebarSuportesLink() {
+          const nav = document.querySelector(".app-sidebar-nav");
+          if (!nav) return;
+          const oldSuportes = nav.querySelector('a[href="/suportes"]');
+          if (oldSuportes) oldSuportes.remove();
+          const pedidosIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M9 13h6"/><path d="M9 17h6"/><path d="M9 9h1"/></svg><span>Pedidos de Material</span>';
+          let link = nav.querySelector('a[href="/pedidos-material"]') || nav.querySelector('a[href="/pedidos-suporte"]');
+          if (!link) {
+            link = document.createElement("a");
+            link.className = "app-sidebar-link";
+          }
+          link.href = "/pedidos-material";
+          link.innerHTML = pedidosIcon;
+          if (!link.dataset.staticPedidosMaterialReady) {
+            link.dataset.staticPedidosMaterialReady = "1";
+            link.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              window.location.assign("/pedidos-material?refresh=" + Date.now());
+            }, true);
+          }
+          const medicao = [...nav.querySelectorAll("a")].find(a => (a.textContent || "").includes("Medi"));
+          if (medicao && medicao.nextSibling !== link) nav.insertBefore(link, medicao.nextSibling);
+          else if (!link.parentElement) nav.appendChild(link);
+        }
+
+        function ensureAnaliseRevisoesLink() {
+          const engNav = [...document.querySelectorAll("nav")].find(nav =>
+            /Navegacao de Engenharia|Navegação de Engenharia/i.test(nav.getAttribute("aria-label") || "")
+          );
+          if (engNav && !engNav.querySelector('a[href="/analise-revisoes"]')) {
+            const link = document.createElement("a");
+            link.href = "/analise-revisoes";
+            link.textContent = "Análise de Revisões";
+            const ref = engNav.querySelector("a");
+            if (ref) link.className = ref.className;
+            link.style.whiteSpace = "nowrap";
+            engNav.appendChild(link);
+          }
+
+          const sideEng = [...document.querySelectorAll('.app-sidebar-nav a')].find(a =>
+            (a.textContent || "").trim() === "Engenharia"
+          );
+          if (sideEng && !sideEng.dataset.revisoesHintReady) {
+            sideEng.dataset.revisoesHintReady = "1";
+            sideEng.title = "Engenharia: Documentos, SIGEM, Medição e Análise de Revisões";
+          }
+        }
+        function scheduleHide() {
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            if (tooltip) tooltip.style.display = "none";
+          }, 350);
+        }
+
+        function findResumoFases() {
+          return [...document.querySelectorAll("div")].filter((el) =>
+            /^Resumo por Fase/.test((el.textContent || "").trim())
+          ).sort((a, b) => (a.textContent || "").length - (b.textContent || "").length)[0];
+        }
+
+        function ensureMedicaoDetalhadaButton() {
+          const header = findResumoFases();
+          if (!header || header.dataset.medicaoDetalhadaReady) return;
+          const text = (header.textContent || "").trim();
+          const match = text.match(/Resumo por Fase\s*â€”\s*([a-zÃ§]{3})\/(\d{2})/i);
+          if (!match) return;
+          const meses = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
+          const mes = meses[match[1].toLowerCase()];
+          const ano = 2000 + Number(match[2]);
+          if (!mes || !ano) return;
+
+          header.dataset.medicaoDetalhadaReady = "1";
+          header.style.display = "flex";
+          header.style.alignItems = "center";
+          header.style.gap = "8px";
+          header.style.zIndex = "1";
+
+          const link = document.createElement("a");
+          link.href = `/medicao/${ano}/${mes}?view=1`;
+          link.textContent = "MediÃ§Ã£o detalhada";
+          link.style.cssText = "margin-left:auto;border:1px solid #185FA5;background:#185FA5;color:#fff;border-radius:5px;padding:4px 9px;font-size:10px;font-weight:600;text-decoration:none;white-space:nowrap";
+          header.appendChild(link);
+        }
+
+        function showTooltip(point, event, hit) {
+          const tip = ensureTooltip();
+          clearTimeout(hideTimer);
+          const bac = curva[curva.length - 1]?.pv_acum || 0;
+          const pvPct = bac ? (point.pv_mes / bac) * 100 : 0;
+          const hasEv = Number(point.ev_mes || 0) > 0;
+          const evMes = hasEv ? Number(point.ev_mes) : null;
+          const evPct = evMes != null && bac ? (evMes / bac) * 100 : null;
+          const desvio = evMes != null ? evMes - Number(point.pv_mes || 0) : null;
+          const desvioPct = desvio != null && bac ? (desvio / bac) * 100 : null;
+          const desvioColor = desvio == null ? "#6b7280" : desvio >= 0 ? "#166534" : "#b91c1c";
+
+          tip.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+              <strong style="font-size:13px;color:#063057">${point.label}</strong>
+              <button data-open-phase style="border:1px solid #185FA5;background:#185FA5;color:white;border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer">Resumo por fase</button>
+            </div>
+            <div style="display:grid;grid-template-columns:82px 1fr 70px;gap:5px;align-items:baseline">
+              <span style="color:#64748b">Previsto</span><strong style="color:#185FA5;text-align:right">${fmtBRL(point.pv_mes)}</strong><span style="text-align:right;color:#185FA5">${fmtPct(pvPct)}</span>
+              <span style="color:#64748b">Real</span><strong style="color:#3B6D11;text-align:right">${fmtBRL(evMes)}</strong><span style="text-align:right;color:#3B6D11">${fmtPct(evPct)}</span>
+              <span style="color:#64748b">Desvio</span><strong style="text-align:right;color:${desvioColor}">${fmtBRL(desvio)}</strong><span style="text-align:right;color:${desvioColor}">${fmtPct(desvioPct)}</span>
+            </div>
+          `;
+          tip.querySelector("[data-open-phase]").onclick = (e) => {
+            e.stopPropagation();
+            hit.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+            setTimeout(() => findResumoFases()?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+          };
+
+          const pad = 14;
+          let left = event.clientX + pad;
+          let top = event.clientY + pad;
+          tip.style.display = "block";
+          const rect = tip.getBoundingClientRect();
+          if (left + rect.width > window.innerWidth - 8) left = event.clientX - rect.width - pad;
+          if (top + rect.height > window.innerHeight - 8) top = event.clientY - rect.height - pad;
+          tip.style.left = `${Math.max(8, left)}px`;
+          tip.style.top = `${Math.max(8, top)}px`;
+        }
+
+        function wireChart() {
+          if (!curva.length) return;
+          ensureMedicaoDetalhadaButton();
+          const svg = document.querySelector('svg[viewBox="0 0 980 320"]');
+          if (!svg) return;
+          const hits = [...svg.querySelectorAll('rect[fill="transparent"]')];
+          hits.forEach((hit, index) => {
+            if (hit.dataset.curvaTooltipReady) return;
+            hit.dataset.curvaTooltipReady = "1";
+            hit.addEventListener("mousemove", (event) => curva[index] && showTooltip(curva[index], event, hit));
+            hit.addEventListener("mouseenter", (event) => curva[index] && showTooltip(curva[index], event, hit));
+            hit.addEventListener("mouseleave", scheduleHide);
+          });
+        }
+
+        async function loadCurva() {
+          if (!/^\/financeiro(?:\/|$)/.test(window.location.pathname)) return;
+          try {
+            curva = await fetch("/api/bm/dashboard/curva-s", { cache: "no-store" }).then((r) => r.json());
+            wireChart();
+          } catch {}
+        }
+
+        function enforceMedicaoViewOnly() {
+          const qs = new URLSearchParams(window.location.search);
+          const isMedicao = /^\/medicao\/\d{4}\/\d{1,2}/.test(window.location.pathname);
+          if (isMedicao && qs.get("view") === "1") sessionStorage.setItem("medicaoViewOnly", "1");
+          if (!isMedicao) sessionStorage.removeItem("medicaoViewOnly");
+          const readOnly = isMedicao && sessionStorage.getItem("medicaoViewOnly") === "1";
+          if (!readOnly) return;
+          if (qs.get("view") !== "1") {
+            window.history.replaceState(window.history.state, "", `${window.location.pathname}?view=1`);
+          }
+
+          if (!document.querySelector("[data-view-only-banner]")) {
+            const banner = document.createElement("div");
+            banner.dataset.viewOnlyBanner = "1";
+            banner.textContent = "Somente visualizaÃ§Ã£o";
+            banner.style.cssText = "position:fixed;right:18px;bottom:18px;z-index:9999;background:#eef2ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:999px;padding:8px 14px;font:600 12px system-ui,-apple-system,Segoe UI,sans-serif;box-shadow:0 8px 24px rgba(15,23,42,.12)";
+            document.body.appendChild(banner);
+          }
+
+          document.querySelectorAll("input, textarea, select").forEach((el) => {
+            el.disabled = true;
+            el.readOnly = true;
+            el.style.pointerEvents = "none";
+            el.style.background = "#f8fafc";
+          });
+
+          const editTexts = [
+            "+ Abrir BM", "Fechar PrevisÃ£o", "Reabrir PrevisÃ£o", "Salvar PrÃ©via",
+            "Salvar", "Enviar p/ AnÃ¡lise", "PrÃ©-Aprovar", "Fechar BM",
+            "Consolidar BM", "Confirmar Fechamento", "Confirmar ConsolidaÃ§Ã£o",
+            "Adicionar"
+          ];
+          document.querySelectorAll("button").forEach((btn) => {
+            const txt = (btn.textContent || "").trim();
+            const title = (btn.getAttribute("title") || "").trim();
+            const isEditText = editTexts.some((t) => txt === t || txt.includes(t));
+            const isPhotoEdit = title === "Editar legenda" || title === "Excluir";
+            if (isEditText || isPhotoEdit) {
+              btn.style.display = "none";
+              btn.disabled = true;
+            }
+          });
+
+          document.querySelectorAll("input[type='file']").forEach((el) => {
+            const box = el.closest("div");
+            if (box && /Adicionar foto/.test(box.textContent || "")) box.style.display = "none";
+          });
+        }
+
+
+
+        function isPrevisaoPage() {
+          return /^\/previsao(?:\/|$)/.test(window.location.pathname);
+        }
+
+        function getPrevisaoAnoMes() {
+          const m = window.location.pathname.match(/^\/previsao\/(\d{4})\/(\d{1,2})/);
+          if (m) return { ano: Number(m[1]), mes: Number(m[2]) };
+          const selects = [...document.querySelectorAll("select")];
+          const mes = Number(selects[0]?.value || new Date().getMonth() + 1);
+          const anoInput = [...document.querySelectorAll("input[type='number']")].find(i => String(i.value || '').length === 4);
+          const ano = Number(anoInput?.value || new Date().getFullYear());
+          return { ano, mes };
+        }
+
+        function fmtManualBRL(v) {
+          return "R$ " + Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function apiManual(path, options = {}) {
+          const res = await fetch(path, {
+            headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+            ...options,
+          });
+          if (!res.ok) {
+            let msg = res.statusText;
+            try { msg = (await res.json()).detail || msg; } catch {}
+            throw new Error(Array.isArray(msg) ? msg.map(e => e.msg || e).join("; ") : msg);
+          }
+          if (res.status === 204) return null;
+          return res.json();
+        }
+
+        function manualCodigo(codigo) {
+          return String(codigo || "").split(".").some(p => /^M\d+$/i.test(p));
+        }
+
+        function codigoLinhaEapCollapse(tr) {
+          const txt = (tr.querySelector("td")?.textContent || "").trim();
+          const m = txt.match(/\d+(?:\.\d+)*(?:\.M\d+)?/i);
+          return m ? m[0] : null;
+        }
+
+        function ensureEapResumoCollapse() {
+          const path = window.location.pathname;
+          if (!/^\/(?:previsao|medicao)(?:\/|$)/.test(path)) return;
+          const rows = [...document.querySelectorAll("table tbody tr")];
+          if (!rows.length) return;
+          const rowByCode = new Map();
+          const codes = [];
+          rows.forEach((tr) => {
+            const code = codigoLinhaEapCollapse(tr);
+            if (!code) return;
+            rowByCode.set(code, tr);
+            codes.push(code);
+          });
+          if (!codes.length) return;
+          window.__eapResumoCollapsed ||= {};
+          const collapsed = window.__eapResumoCollapsed;
+          const hasChildren = (code) => codes.some((other) => other !== code && other.startsWith(code + "."));
+          const hiddenByAncestor = (code) => {
+            const parts = code.split(".");
+            for (let i = 1; i < parts.length; i++) {
+              if (collapsed[parts.slice(0, i).join(".")]) return true;
+            }
+            return false;
+          };
+          codes.forEach((code) => {
+            const tr = rowByCode.get(code);
+            if (!tr) return;
+            tr.style.display = hiddenByAncestor(code) ? "none" : "";
+            if (!hasChildren(code)) return;
+            const first = tr.querySelector("td");
+            if (!first || first.querySelector("[data-eap-resumo-collapse]")) return;
+            const hasNativeButton = first.querySelector("button");
+            if (hasNativeButton && code.split(".").length === 1) return;
+            const btn = document.createElement("button");
+            btn.dataset.eapResumoCollapse = "1";
+            btn.type = "button";
+            btn.textContent = collapsed[code] ? "▸" : "▾";
+            btn.title = "Expandir / recolher resumo";
+            btn.style.cssText = "background:none;border:0;color:inherit;cursor:pointer;font-size:11px;padding:0 4px 0 0;line-height:1;vertical-align:middle";
+            btn.onclick = (ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+              collapsed[code] = !collapsed[code];
+              ensureEapResumoCollapse();
+            };
+            first.insertBefore(btn, first.firstChild);
+          });
+          rows.forEach((tr) => {
+            const code = codigoLinhaEapCollapse(tr);
+            const btn = tr.querySelector("[data-eap-resumo-collapse]");
+            if (code && btn) btn.textContent = collapsed[code] ? "▸" : "▾";
+          });
+        }
+
+        let eapManualCache = null;
+        let ensureManualRowsRunning = false;
+
+        async function getEapManualItens() {
+          if (!eapManualCache) eapManualCache = await apiManual("/api/eap/itens?limit=5000");
+          return eapManualCache;
+        }
+
+        function escapeHtmlManual(v) {
+          return String(v ?? "").replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+        }
+
+        async function abrirAtividadeManualModal(origemCodigo) {
+          const { ano, mes } = getPrevisaoAnoMes();
+          const itens = await getEapManualItens();
+          const origem = itens.find(i => i.codigo === origemCodigo);
+          if (!origem) return alert("Item de origem nao encontrado na EAP.");
+          const overlay = document.createElement("div");
+          overlay.style.cssText = "position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center";
+          overlay.innerHTML = `
+            <div style="background:#fff;border-radius:8px;width:640px;max-width:95vw;max-height:86vh;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.3);font:12px system-ui,-apple-system,Segoe UI,sans-serif;color:#111827">
+              <div style="background:#0f766e;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+                <strong>Nova atividade vinculada ? ${String(mes).padStart(2,"0")}/${ano}</strong>
+                <button data-close style="background:none;border:0;color:#fff;font-size:20px;cursor:pointer">?</button>
+              </div>
+              <div style="padding:14px;display:grid;gap:10px">
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:9px 10px">
+                  <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Atividade de origem</div>
+                  <div style="font-weight:700;color:#063057;margin-top:2px">${escapeHtmlManual(origem.codigo)} - ${escapeHtmlManual(origem.descricao)}</div>
+                  <div style="font-size:11px;color:#64748b;margin-top:2px">Valor total da origem: <strong>${fmtManualBRL(origem.valor)}</strong></div>
+                </div>
+                <label style="font-size:11px;font-weight:700">Descri??o da nova atividade
+                  <input data-desc style="margin-top:4px;width:100%;padding:7px 8px;border:1px solid #d0d0cc;border-radius:5px;font-size:12px" />
+                </label>
+                <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:end">
+                  <label style="font-size:11px;font-weight:700">Equivale a (%)
+                    <input data-equiv type="number" min="0" max="100" step="0.000001" value="5" style="margin-top:4px;width:100%;padding:7px 8px;border:1px solid #d0d0cc;border-radius:5px;font-size:12px;text-align:right" />
+                  </label>
+                  <div style="font-size:11px;color:#64748b;padding:7px 0">
+                    Valor calculado da nova atividade: <strong data-valor-calc style="color:#0f766e">${fmtManualBRL((origem.valor || 0) * 0.05)}</strong>
+                  </div>
+                </div>
+                <div style="font-size:11px;color:#64748b">A nova atividade ser? criada abaixo da origem e entrar? com 100% previsto neste m?s. O percentual acima define apenas o peso financeiro dela dentro da atividade de origem.</div>
+                <div style="display:flex;justify-content:flex-end;gap:8px">
+                  <button data-close style="background:#fff;color:#475569;border:1px solid #cbd5e1;border-radius:5px;padding:7px 14px;font-weight:700;cursor:pointer">Cancelar</button>
+                  <button data-create style="background:#0f766e;color:#fff;border:0;border-radius:5px;padding:7px 18px;font-weight:700;cursor:pointer">Adicionar atividade</button>
+                </div>
+              </div>
+            </div>`;
+          document.body.appendChild(overlay);
+          const calc = () => {
+            const equiv = Number(String(overlay.querySelector("[data-equiv]").value || 0).replace(',', '.'));
+            overlay.querySelector("[data-valor-calc]").textContent = fmtManualBRL((origem.valor || 0) * equiv / 100);
+          };
+          overlay.querySelector("[data-equiv]").addEventListener("input", calc);
+          overlay.addEventListener("click", e => { if (e.target === overlay || e.target.dataset.close !== undefined) overlay.remove(); });
+          overlay.querySelector("[data-create]").onclick = async () => {
+            const descricao = overlay.querySelector("[data-desc]").value.trim();
+            const equiv = Number(String(overlay.querySelector("[data-equiv]").value || 0).replace(',', '.'));
+            const valor = (Number(origem.valor || 0) * equiv) / 100;
+            if (!descricao) return alert("Informe a descricao da nova atividade.");
+            if (!Number.isFinite(equiv) || equiv <= 0 || equiv > 100) return alert("O percentual equivalente deve ficar entre 0% e 100%.");
+            const item = await apiManual("/api/eap/atividades-manuais", { method: "POST", body: JSON.stringify({ parent_codigo: origem.codigo, descricao, valor, unidade: "%" }) });
+            await apiManual(`/api/eap/previsao/${ano}/${mes}`, { method: "POST", body: JSON.stringify({ itens: [{ eap_codigo: item.codigo, pct_previsto: 100, observacao: `Atividade manual vinculada a ${origem.codigo} (${equiv}%)` }] }) });
+            alert(`Atividade criada e prevista: ${item.codigo}`);
+            window.location.reload();
+          };
+        }
+
+        function codigoLinhaPrevisao(tr) {
+          const txt = (tr.querySelector("td")?.textContent || "").trim();
+          const m = txt.match(/^\d+(?:\.\d+)*(?:\.M\d+)?/i);
+          return m ? m[0] : null;
+        }
+
+        async function ensureAtividadeManualPrevisao() {
+          if (!isPrevisaoPage() || ensureManualRowsRunning) return;
+          ensureManualRowsRunning = true;
+          try {
+          document.querySelectorAll("[data-atividade-manual-previsao='top']").forEach(b => b.remove());
+          const itens = await getEapManualItens().catch(() => []);
+          const map = new Map(itens.map(i => [i.codigo, i]));
+          const parentCodes = new Set(itens.map(i => i.parent_codigo).filter(Boolean));
+          document.querySelectorAll("table tbody tr").forEach(tr => {
+            if (tr.querySelector("[data-atividade-manual-row]")) return;
+            const codigo = codigoLinhaPrevisao(tr);
+            const item = map.get(codigo);
+            if (!item || manualCodigo(codigo)) return;
+            const last = tr.querySelector("td:last-child");
+            if (!last) return;
+            const btn = document.createElement("button");
+            btn.dataset.atividadeManualRow = "1";
+            btn.textContent = "+";
+            btn.title = "Adicionar atividade vinculada a esta linha";
+            btn.style.cssText = "border:1px solid #0f766e;background:#ecfdf5;color:#0f766e;border-radius:4px;width:22px;height:22px;font-weight:800;cursor:pointer;line-height:18px";
+            btn.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); abrirAtividadeManualModal(codigo); };
+            last.appendChild(btn);
+          });
+          } finally {
+            ensureManualRowsRunning = false;
+          }
+        }
+
+        async function abrirBmAutomaticoAposFecharPrevisao() {
+          if (!isPrevisaoPage()) return;
+          const { ano, mes } = getPrevisaoAnoMes();
+          await new Promise(resolve => window.setTimeout(resolve, 700));
+          let status;
+          try {
+            status = await apiManual(`/api/bm/previsao/status/${ano}/${mes}`);
+          } catch {
+            return;
+          }
+          if (!["fechada", "convertida"].includes(status?.status)) return;
+          try {
+            await apiManual(`/api/bm/mes/${ano}/${mes}`);
+            return;
+          } catch (err) {
+            if (!/404|n.o encontrado|não encontrado/i.test(String(err?.message || err))) throw err;
+          }
+          try {
+            await apiManual("/api/bm/abrir", {
+              method: "POST",
+              body: JSON.stringify({
+                ano,
+                mes,
+                criado_por: "usuario",
+                observacao: "Aberto automaticamente ao fechar a previsao mensal."
+              })
+            });
+            window.setTimeout(() => window.location.reload(), 250);
+          } catch (err) {
+            alert("Previsao fechada, mas nao consegui abrir o BM automaticamente: " + (err?.message || err));
+          }
+        }
+
+        function ensurePrevisaoFechaAbreBm() {
+          if (window.__previsaoFechaAbreBmBound) return;
+          window.__previsaoFechaAbreBmBound = true;
+          document.addEventListener("click", (ev) => {
+            const btn = ev.target?.closest?.("button");
+            if (!btn || !isPrevisaoPage()) return;
+            const texto = (btn.textContent || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            if (!texto.includes("fechar previs")) return;
+            abrirBmAutomaticoAposFecharPrevisao();
+          }, true);
+        }
+
+        let globalUiTick = 0;
+        let curvaTimer = null;
+
+        function runGlobalUiHooks() {
+          globalUiTick = 0;
+          const path = window.location.pathname;
+          ensureSidebarSuportesLink();
+          ensureAnaliseRevisoesLink();
+          if (/^\/financeiro(?:\/|$)/.test(path)) {
+            wireChart();
+            ensureMedicaoDetalhadaButton();
+          }
+          if (/^\/medicao\/\d{4}\/\d{1,2}/.test(path)) enforceMedicaoViewOnly();
+          if (isPrevisaoPage()) ensureAtividadeManualPrevisao();
+          ensurePrevisaoFechaAbreBm();
+          ensureEapResumoCollapse();
+        }
+
+        function scheduleGlobalUiHooks() {
+          if (globalUiTick) return;
+          globalUiTick = window.setTimeout(runGlobalUiHooks, 180);
+        }
+
+        function restartCurvaTimer() {
+          if (curvaTimer) window.clearInterval(curvaTimer);
+          curvaTimer = null;
+          if (/^\/financeiro(?:\/|$)/.test(window.location.pathname)) {
+            loadCurva();
+            curvaTimer = window.setInterval(loadCurva, 30000);
+          }
+        }
+
+        new MutationObserver(scheduleGlobalUiHooks).observe(document.body, { childList: true, subtree: true });
+        window.addEventListener("load", () => {
+          runGlobalUiHooks();
+          restartCurvaTimer();
+        });
+        window.addEventListener("popstate", () => {
+          runGlobalUiHooks();
+          restartCurvaTimer();
+        });
+        const pushStateOriginal = history.pushState;
+        history.pushState = function(...args) {
+          const ret = pushStateOriginal.apply(this, args);
+          window.setTimeout(() => {
+            runGlobalUiHooks();
+            restartCurvaTimer();
+          }, 0);
+          return ret;
+        };
+      })();
+    </script>
+  </body>
+</html>
+

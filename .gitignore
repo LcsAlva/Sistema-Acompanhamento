@@ -1,0 +1,54 @@
+# ── Banco de dados ──────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.bak
+*.bak_*
+banco_backup_*.db
+
+# ── Logs ────────────────────────────────────────────────────────
+*.log
+uvicorn.log
+backend_out.txt
+
+# ── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# ── Node / Frontend ─────────────────────────────────────────────
+frontend/node_modules/
+# O fonte atual ainda nao recompila limpo; manter o dist publicado garante
+# que o sistema rode apos clone/deploy.
+!frontend/dist/
+!frontend/dist/**
+
+# Planilhas temporarias de carga local
+_tmp_*.xlsx
+
+# ── PyInstaller ─────────────────────────────────────────────────
+*.spec
+dist/
+build/
+_internal/
+
+# ── Uploads (dados de produção) ──────────────────────────────────
+backend/uploads/
+
+# ── Claude / IDE ─────────────────────────────────────────────────
+.claude/
+.omc/
+.vscode/
+.idea/
+
+!frontend/dist/
+!frontend/dist/**

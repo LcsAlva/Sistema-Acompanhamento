@@ -1,0 +1,7 @@
+{
+  "_descricao": "Parâmetros do Motor de Medição de Engenharia (Fase 2A). Status na escala SIGEM. Reutilizável: outro contrato pode ter status/pesos diferentes sem alterar código.",
+  "status_aptos": ["SEM WORKFLOW"],
+  "status_em_elaboracao": ["EM ELABORACAO", "EM ELABORAÇÃO", "ELABORACAO"],
+  "status_em_analise": ["EM ANALISE", "EM ANÁLISE", "ANALISE", "EM REVISAO", "EM REVISÃO"],
+  "peso_por": "a4_equivalente"
+}

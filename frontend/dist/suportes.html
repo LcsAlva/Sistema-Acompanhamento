@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pedidos de Material</title>
+    <style>
+      :root {
+        --navy: #063057;
+        --sidebar: #0f172a;
+        --sidebar-hover: #1e293b;
+        --blue: #185fa5;
+        --bg: #f2f2f0;
+        --line: #e0e0dc;
+        --muted: #6b7280;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: #1f2937;
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      .shell { display: flex; min-height: 100vh; overflow: hidden; }
+      .sidebar {
+        width: 248px;
+        min-width: 248px;
+        height: 100vh;
+        background: var(--sidebar);
+        color: #e5e7eb;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #fff;
+        text-decoration: none;
+        padding: 20px 18px;
+        border-bottom: 1px solid rgba(226, 232, 240, .1);
+      }
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #2563eb;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        font-size: 12px;
+      }
+      .brand-title { font-weight: 700; font-size: 15px; line-height: 1.2; }
+      .brand-subtitle { color: #94a3b8; font-size: 11px; margin-top: 3px; }
+      .nav { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 14px 10px; }
+      .nav a {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-height: 40px;
+        color: #cbd5e1;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .nav a:hover, .nav a.active { background: var(--sidebar-hover); color: #fff; }
+      .nav a.active { box-shadow: inset 3px 0 0 #2563eb; }
+      .nav svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        color: #cbd5e1;
+        stroke-width: 1.9;
+      }
+      .footer {
+        margin-top: auto;
+        color: #94a3b8;
+        font-size: 11px;
+        padding: 14px 18px 18px;
+        border-top: 1px solid rgba(226, 232, 240, .1);
+      }
+      .footer strong { display: block; color: #e5e7eb; font-size: 12px; margin-top: 2px; }
+      .content { padding: 18px 22px 28px; }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      h1 { margin: 0; color: var(--navy); font-size: 19px; }
+      .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, .05);
+        margin-bottom: 12px;
+      }
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(240px, 360px) auto;
+        gap: 10px;
+        align-items: end;
+      }
+      .request-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 10px;
+        align-items: end;
+      }
+      .request-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .field-hint { color: #64748b; font-size: 10px; font-weight: 500; line-height: 1.25; }
+      .error-list {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #991b1b;
+        border-radius: 6px;
+        padding: 9px 10px;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+      .summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin: 10px 0 4px;
+      }
+      .summary span {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 11px;
+        color: #334155;
+      }
+      .sheet-preview {
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f8fafc;
+        margin: 10px 0 12px;
+      }
+      .sheet-preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 12px;
+        color: #0f172a;
+        font-weight: 800;
+      }
+      .sheet-preview-head a {
+        color: var(--blue);
+        font-size: 11px;
+        text-decoration: none;
+      }
+      .sheet-preview img {
+        display: block;
+        width: 100%;
+        max-height: 720px;
+        object-fit: contain;
+        background: #fff;
+      }
+      label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #475569; font-weight: 700; }
+      input, select {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 13px;
+        background: #fff;
+        color: #111827;
+      }
+      button {
+        border: 1px solid var(--blue);
+        background: var(--blue);
+        color: #fff;
+        border-radius: 6px;
+        padding: 9px 14px;
+        font-size: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:disabled { opacity: .55; cursor: not-allowed; }
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        color: var(--navy);
+        font-weight: 800;
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      .muted { color: var(--muted); font-size: 12px; }
+      .scroll { overflow: auto; border: 1px solid #ecece8; border-radius: 6px; max-height: 360px; }
+      table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      th {
+        position: sticky;
+        top: 0;
+        background: #f5f5f2;
+        color: #4b5563;
+        text-align: left;
+        padding: 7px 8px;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+        z-index: 1;
+      }
+      td { padding: 7px 8px; border-bottom: 1px solid #ecece8; vertical-align: top; }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 2px 7px;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .pill.info { background: #eef2ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+      .pill.warn { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+      .pill.danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+      .pill.ok { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+      .notice {
+        border: 1px solid #fed7aa;
+        background: #fff7ed;
+        color: #92400e;
+        border-radius: 6px;
+        padding: 9px 10px;
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+      .vars { display: flex; flex-wrap: wrap; gap: 7px; }
+      .empty { color: #94a3b8; font-size: 12px; font-style: italic; padding: 12px; }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        background: rgba(15, 23, 42, .56);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal-panel {
+        width: min(980px, 96vw);
+        max-height: 90vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 18px 48px rgba(15, 23, 42, .24);
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        background: var(--navy);
+        color: #fff;
+      }
+      .modal-body { padding: 14px 16px 16px; }
+      .modal-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .btn-secondary {
+        background: #fff;
+        color: var(--blue);
+        border-color: #bfdbfe;
+      }
+      .btn-danger {
+        background: #991b1b;
+        border-color: #991b1b;
+      }
+      @media (max-width: 1100px) {
+        .sidebar { width: 220px; min-width: 220px; }
+      }
+      @media (max-width: 760px) {
+        .shell { flex-direction: column; overflow: visible; }
+        .sidebar { width: 100%; min-width: 0; height: auto; position: static; }
+        .nav { flex-direction: row; overflow-x: auto; }
+        .nav a { white-space: nowrap; }
+        .footer { display: none; }
+        .filters { grid-template-columns: 1fr 1fr; }
+        .request-grid { grid-template-columns: 1fr 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="/">
+          <div class="brand-mark">ETM</div>
+          <div>
+            <div class="brand-title">ETM Suite</div>
+            <div class="brand-subtitle">Planejamento e Medição</div>
+          </div>
+        </a>
+        <nav class="nav">
+          <a href="/"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg><span>Dashboard Executivo</span></a>
+          <a href="/dashboard"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M17 14h-6"/><path d="M13 18H7"/><path d="M7 14h.01"/><path d="M17 18h.01"/></svg><span>Programação Semanal</span></a>
+          <a href="/integracao-ld"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg><span>Engenharia</span></a>
+          <a href="/producao"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16h.01"/><path d="M16 16h.01"/><path d="M3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5a.5.5 0 0 0-.769-.422l-4.462 2.844A.5.5 0 0 1 15 10.5v-2a.5.5 0 0 0-.769-.422L9.77 10.922A.5.5 0 0 1 9 10.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"/><path d="M8 16h.01"/></svg><span>Produção</span></a>
+          <a href="/financeiro"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V7"/><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"/></svg><span>Medição</span></a>
+          <a href="/pedidos-material" class="active"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M9 13h6"/><path d="M9 17h6"/><path d="M9 9h1"/></svg><span>Pedidos de Material</span></a>
+          <a href="/gestao-economica/dashboard"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 18v-7"/><path d="M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M3 22h18"/><path d="M6 18v-7"/></svg><span>Gestão Econômica</span></a>
+          <a href="/gestao-integrada/auditoria"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg><span>Gestão Integrada</span></a>
+          <a href="/relatorios"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M8 18v-2"/><path d="M12 18v-4"/><path d="M16 18v-6"/></svg><span>Relatórios</span></a>
+          <a href="/criterios"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg><span>Administração</span></a>
+        </nav>
+        <div class="footer">
+          RECAP EPC
+          <strong>Revamp Caldeira CO</strong>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="topbar">
+          <div>
+            <h1>Pedidos de Material</h1>
+            <div class="sub">Consulte o catalogo de suportes, levante a relacao de materiais e gere pedidos tecnicos simples.</div>
+          </div>
+        </div>
+
+        <section class="card">
+          <div class="filters">
+            <label>Código do suporte
+              <select id="codigoSuporte"><option value="">Selecione...</option></select>
+            </label>
+            <button id="limparBtn" type="button">Limpar</button>
+          </div>
+          <div id="dadosSolicitacao" style="margin-top:14px"></div>
+          <div id="avisosSolicitacao"></div>
+          <div class="request-actions">
+            <button id="consultarBtn" type="button" disabled>Consultar Material</button>
+            <button id="gerarPedidoTopoBtn" type="button" disabled>Gerar Pedido</button>
+            <span class="muted">Os campos sao montados pela aba variaveis_suporte.</span>
+          </div>
+        </section>
+
+        <section id="resultado" class="card">
+          <div class="empty">Informe o código do suporte e consulte para ver materiais, componentes e dimensões necessárias.</div>
+        </section>
+        <section id="pedidoAtual" class="card"></section>
+        <section id="pedidosControle" class="card"></section>
+      </main>
+    </div>
+
+    <script>
+      const $ = (sel) => document.querySelector(sel);
+      const esc = (v) => String(v == null || v === "" ? "-" : v).replace(/[&<>"']/g, s => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[s]));
+      const val = (v) => v == null || v === "" ? "-" : String(v);
+      const norm = (v) => String(v || "").trim().toLowerCase();
+      const clean = (v) => String(v || "").trim();
+      const isPendente = (v) => norm(v).includes("pendente");
+      const isSim = (v) => norm(v) === "sim";
+      const isCondicional = (v) => norm(v) === "condicional";
+      const CAMPOS_OPCOES = ["item", "tipo", "diametro_tubo", "faixa_diametro_tubo", "isolamento", "espessura_isolamento", "tipo_aplicacao", "estrutura_fixacao"];
+      const CAMPOS_NUMERICOS = ["h", "l", "m", "n", "comprimento", "quantidade_suportes"];
+      const INVALIDOS_OPCAO = [
+        "103",
+        "confirmar_na_tabela",
+        "pendente_transcricao_detalhada",
+        "conforme tabela do suporte",
+        "valor inválido encontrado",
+        "valor invalido encontrado",
+        "undefined",
+        "null",
+        "-",
+      ];
+      let suporteAtual = null;
+      let resultadoAtual = null;
+      let pedidoEmMontagem = { materiais: [], componentes_referenciados: [], consultas: [] };
+      const PEDIDOS_STORAGE_KEY = "etm_pedidos_suporte_v1";
+      const STATUS_PEDIDO = ["Rascunho", "Emitido", "Em fabricação", "Entregue", "Cancelado"];
+      const isPedidosPage = () => window.location.pathname.includes("pedidos-suporte") || window.location.pathname.includes("pedidos-material");
+      const atualizarBotaoPedido = () => {
+        const btn = $("#gerarPedidoTopoBtn");
+        if (btn) btn.disabled = !totalItensPedido();
+      };
+
+      async function api(url) {
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+        return r.json();
+      }
+
+      function dnFaixa(row) {
+        const dn = row.diametro_tubo || "";
+        const faixa = row.faixa_diametro_tubo || "";
+        if (dn && faixa) return `${dn} / ${faixa}`;
+        return dn || faixa || "-";
+      }
+
+      function materialMarkers(row) {
+        const m = [];
+        if (isSim(row.condicional)) m.push('<span class="pill warn">Condicional</span>');
+        if (isPendente(row.status_validacao_material)) m.push('<span class="pill danger">Pendente</span>');
+        const dim = norm(row.dimensao_especificacao);
+        const obs = norm(row.observacao_material);
+        if (dim.includes("a x c x t") || dim.includes("l informado") || obs.includes("conforme tabela")) {
+          m.push('<span class="pill warn">Dimensão conforme tabela</span>');
+        }
+        return m.join(" ");
+      }
+
+      function componenteMarkers(row) {
+        return isSim(row.condicional) ? '<span class="pill warn">Condicional</span>' : "";
+      }
+
+      function unique(values) {
+        return [...new Set(values.map(clean).filter(opcaoValida))].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+      }
+
+      function todasLinhas(data) {
+        return [...(data?.materiais || []), ...(data?.componentes_referenciados || []), ...(data?.dimensoes_suporte || [])];
+      }
+
+      function linhasOperacionais(data) {
+        return [...(data?.materiais || []), ...(data?.componentes_referenciados || [])];
+      }
+
+      function opcaoValida(v) {
+        const texto = clean(v);
+        if (!texto) return false;
+        const n = norm(texto);
+        if (INVALIDOS_OPCAO.includes(n)) return false;
+        if (n.includes("confirmar_na_tabela")) return false;
+        if (n.includes("pendente_transcricao")) return false;
+        if (n.includes("conforme tabela do suporte")) return false;
+        if (n.includes("valor inválido") || n.includes("valor invalido")) return false;
+        return true;
+      }
+
+      function valorCoringa(v) {
+        const n = norm(v);
+        return ["", "todos", "todas", "geral", "aplicavel a todos", "aplic?vel a todos"].includes(n);
+      }
+
+      function partesValor(v) {
+        return norm(v).replace(" ou ", "/").split("/").map(p => p.trim()).filter(Boolean);
+      }
+
+      function numeroDn(v) {
+        let texto = norm(v).replace(/["”″]/g, "").replace("até", "a").replace("ate", "a").replace(/^de\s+/, "").trim();
+        if (!texto) return null;
+        const misto = texto.match(/^(\d+(?:\.\d+)?)\s+(\d+)\s*\/\s*(\d+)/);
+        if (misto) {
+          const inteiro = Number(misto[1]);
+          const n = Number(misto[2]);
+          const d = Number(misto[3]);
+          return d ? inteiro + n / d : null;
+        }
+        let token = texto.split(/\s+/)[0].replace(",", ".");
+        if (token.includes("-")) token = token.split("-")[0];
+        if (token.includes("/")) {
+          const [n, d] = token.split("/").map(Number);
+          return d ? n / d : null;
+        }
+        const n = Number(token);
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function intervaloDn(v) {
+        let texto = norm(v).replace(/["”″]/g, "").replace("até", "a").replace("ate", "a").replace(/^de\s+/, "");
+        let ini;
+        let fim;
+        if (texto.includes(" a ")) {
+          [ini, fim] = texto.split(" a ", 2);
+        } else if (texto.includes("-")) {
+          [ini, fim] = texto.split("-", 2);
+        } else {
+          const dn = numeroDn(texto);
+          return dn == null ? null : [dn, dn];
+        }
+        const a = numeroDn(ini);
+        const b = numeroDn(fim);
+        if (a == null || b == null) return null;
+        return [Math.min(a, b), Math.max(a, b)];
+      }
+
+      function dnDentroDaFaixa(valorLinha, selecionado) {
+        const dn = numeroDn(selecionado);
+        const faixa = intervaloDn(valorLinha);
+        return dn != null && faixa != null && dn >= faixa[0] && dn <= faixa[1];
+      }
+
+      function valorCompativel(valorLinha, selecionado) {
+        if (!clean(selecionado)) return true;
+        if (valorCoringa(valorLinha)) return true;
+        const alvo = norm(selecionado);
+        const valor = norm(valorLinha);
+        if (valor === alvo) return true;
+        if (dnDentroDaFaixa(valorLinha, selecionado)) return true;
+        return partesValor(valorLinha).includes(alvo);
+      }
+
+      function diametroCompativel(row, selecionado) {
+        if (!clean(selecionado)) return true;
+        if (valorCoringa(row.diametro_tubo) && valorCoringa(row.faixa_diametro_tubo)) return true;
+        const valores = valorCoringa(row.diametro_tubo) ? [row.faixa_diametro_tubo, row.tipo] : [row.diametro_tubo];
+        return valores.some(v => clean(v) && valorCompativel(v, selecionado));
+      }
+
+      function campoBate(row, campo, selecionado) {
+        if (!clean(selecionado)) return true;
+        const key = campoCanonico(campo);
+        if (key === "diametro_tubo" || key === "faixa_diametro_tubo") {
+          return diametroCompativel(row, selecionado);
+        }
+        return valorCompativel(valorCampoLinha(row, key), selecionado);
+      }
+
+      function campoCanonico(nome) {
+        const key = norm(nome);
+        if (["dn", "diametro", "diâmetro"].includes(key)) return "diametro_tubo";
+        return key;
+      }
+
+      function valorCampoLinha(row, campo) {
+        const key = campoCanonico(campo);
+        if (key === "diametro_tubo") return clean(row.diametro_tubo);
+        return clean(row[key]);
+      }
+
+      function valoresSolicitacao() {
+        const values = {};
+        $("#dadosSolicitacao").querySelectorAll("input, select").forEach(el => {
+          values[el.name] = clean(el.value);
+        });
+        return values;
+      }
+
+      function linhaBateSelecao(row, valores, ignorarCampo) {
+        return CAMPOS_OPCOES.every(campo => {
+          if (campo === ignorarCampo) return true;
+          const selecionado = clean(valores[campo]);
+          return campoBate(row, campo, selecionado);
+        });
+      }
+
+      function opcoesParaCampo(data, campo, valores) {
+        const posicao = CAMPOS_OPCOES.indexOf(campo);
+        const camposAnteriores = posicao >= 0 ? CAMPOS_OPCOES.slice(0, posicao) : CAMPOS_OPCOES;
+        const bateAnteriores = row => camposAnteriores.every(campoAnterior => {
+          const selecionado = clean(valores[campoAnterior]);
+          return campoBate(row, campoAnterior, selecionado);
+        });
+        const operacionais = linhasOperacionais(data).filter(bateAnteriores);
+        const opcoesOperacionais = unique(operacionais.map(row => valorCampoLinha(row, campo)));
+        if (opcoesOperacionais.length) return opcoesOperacionais;
+        const rows = (data?.dimensoes_suporte || []).filter(bateAnteriores);
+        return unique(rows.map(row => valorCampoLinha(row, campo)));
+      }
+
+      function camposComOpcoes(data) {
+        const valores = valoresSolicitacao();
+        return CAMPOS_OPCOES.filter(campo => opcoesParaCampo(data, campo, valores).length > 0);
+      }
+
+      function aplicarCascata(data, valores) {
+        CAMPOS_OPCOES.forEach(campo => {
+          if (!valores[campo]) return;
+          if (!opcoesParaCampo(data, campo, valores).includes(valores[campo])) {
+            valores[campo] = "";
+          }
+        });
+        return valores;
+      }
+
+      function limparDepoisDoCampo(campo) {
+        const posicao = CAMPOS_OPCOES.indexOf(campo);
+        if (posicao < 0) return;
+        CAMPOS_OPCOES.slice(posicao + 1).forEach(nome => {
+          const el = $(`[name="${nome}"]`);
+          if (el) el.value = "";
+        });
+      }
+
+      function opcoesParaVariavel(data, variavel, valores) {
+        const key = campoCanonico(variavel);
+        if (CAMPOS_OPCOES.includes(key)) {
+          return opcoesParaCampo(data, key, valores);
+        }
+        return [];
+      }
+
+      function nomeCampoVariavel(v) {
+        const variavel = clean(v.variavel || v.nome_para_tela);
+        const key = campoCanonico(variavel);
+        if (CAMPOS_OPCOES.includes(key)) return key;
+        return variavel;
+      }
+
+      function ehNumericoVariavel(nome, tipoEntrada) {
+        const key = norm(nome);
+        const tipo = norm(tipoEntrada);
+        return tipo.includes("número") || tipo.includes("numero") || CAMPOS_NUMERICOS.includes(key);
+      }
+
+      function rotuloCampo(nome) {
+        const labels = {
+          diametro_tubo: "DN / Diâmetro",
+          faixa_diametro_tubo: "Faixa de diâmetro",
+          espessura_isolamento: "Espessura de isolamento",
+          tipo_aplicacao: "Tipo de aplicação",
+          estrutura_fixacao: "Estrutura de fixação",
+          quantidade_suportes: "quantidade_suportes"
+        };
+        return labels[nome] || nome;
+      }
+
+      function quantidadeSuportes() {
+        const raw = clean($('[name="quantidade_suportes"]')?.value);
+        const parsed = Number(raw.replace(",", "."));
+        return Number.isFinite(parsed) ? parsed : NaN;
+      }
+
+      function parseNumeroQuantidade(value) {
+        const texto = clean(value);
+        const match = texto.match(/^-?\d+(?:[.,]\d+)?/);
+        if (!match) return null;
+        const n = Number(match[0].replace(",", "."));
+        return Number.isFinite(n) ? n : null;
+      }
+
+      function sufixoQuantidade(value) {
+        const texto = clean(value);
+        const match = texto.match(/^-?\d+(?:[.,]\d+)?\s*(.*)$/);
+        return match ? clean(match[1]) : "";
+      }
+
+      function formatNumero(n) {
+        return n.toLocaleString("pt-BR", { maximumFractionDigits: 4 });
+      }
+
+      function quantidadeTotal(qtdUnitaria, qtdSuportes, unidade) {
+        const base = parseNumeroQuantidade(qtdUnitaria);
+        if (base == null || !Number.isFinite(qtdSuportes)) return "Pendente/Não calculado";
+        const sufixo = clean(unidade) || sufixoQuantidade(qtdUnitaria);
+        return `${formatNumero(base * qtdSuportes)}${sufixo ? ` ${esc(sufixo)}` : ""}`;
+      }
+
+      function renderDadosSolicitacao(data) {
+        const valoresAtuais = data ? aplicarCascata(data, valoresSolicitacao()) : {};
+        suporteAtual = data;
+        $("#consultarBtn").disabled = !data;
+        $("#avisosSolicitacao").innerHTML = "";
+        if (!data) {
+          $("#dadosSolicitacao").innerHTML = "";
+          return;
+        }
+
+        const variaveis = (data.variaveis_suporte || []).filter(v => !["quantidade", "quantidade_suportes"].includes(norm(v.variavel)));
+        const camposVariaveis = new Set(variaveis.map(v => nomeCampoVariavel(v)));
+        const camposExtras = camposComOpcoes(data)
+          .filter(campo => !camposVariaveis.has(campo))
+          .map(campo => ({
+            variavel: campo,
+            nome_para_tela: campo,
+            obrigatoria: "Sim",
+            tipo_entrada: "Seleção",
+            condicao_uso: "Opções disponíveis no catálogo para este suporte.",
+            observacao: ""
+          }));
+        const variaveisCampos = [...variaveis, ...camposExtras];
+        const campos = [
+          `<label>quantidade_suportes *
+            <input name="quantidade_suportes" type="number" min="1" step="1" required placeholder="Ex.: 3" value="${esc(valoresAtuais.quantidade_suportes || "")}" />
+            <span class="field-hint">Quantidade de unidades deste suporte na solicitação.</span>
+          </label>`
+        ];
+
+        variaveisCampos.forEach(v => {
+          const nome = nomeCampoVariavel(v);
+          const obrigatorio = isSim(v.obrigatoria) || isCondicional(v.obrigatoria);
+          const condicional = isCondicional(v.obrigatoria);
+          const opcoes = opcoesParaVariavel(data, nome, valoresAtuais);
+          if (CAMPOS_OPCOES.includes(nome) && !opcoes.length) return;
+          const label = `${esc(rotuloCampo(nome))}${obrigatorio ? " *" : ""}${condicional ? " (condicional)" : ""}`;
+          const hint = [v.nome_para_tela, v.condicao_uso, v.observacao].map(clean).filter(Boolean).join(" | ");
+          const required = obrigatorio ? "required" : "";
+          if (opcoes.length) {
+            campos.push(`<label>${label}
+              <select name="${esc(nome)}" ${required}>
+                <option value="">${obrigatorio ? "Selecione..." : "Opcional"}</option>
+                ${opcoes.map(o => `<option value="${esc(o)}" ${valoresAtuais[nome] === o ? "selected" : ""}>${esc(o)}</option>`).join("")}
+              </select>
+              ${hint ? `<span class="field-hint">${esc(hint)}</span>` : ""}
+            </label>`);
+          } else {
+            const type = ehNumericoVariavel(nome, v.tipo_entrada) ? "number" : "text";
+            const step = type === "number" ? ' step="any"' : "";
+            campos.push(`<label>${label}
+              <input name="${esc(nome)}" type="${type}"${step} ${required} placeholder="${obrigatorio ? "Obrigatório" : "Opcional"}" value="${esc(valoresAtuais[nome] || "")}" />
+              ${hint ? `<span class="field-hint">${esc(hint)}</span>` : ""}
+            </label>`);
+          }
+        });
+
+        $("#dadosSolicitacao").innerHTML = `
+          <div class="section-title"><span>Dados da solicitação</span><span class="pill info">${campos.length} campos</span></div>
+          <div class="request-grid">${campos.join("")}</div>
+        `;
+      }
+
+      function validarSolicitacao() {
+        const erros = [];
+        $("#dadosSolicitacao").querySelectorAll("input[required], select[required]").forEach(el => {
+          if (!clean(el.value)) erros.push(`Preencha ${el.name}.`);
+        });
+        const qtd = quantidadeSuportes();
+        if (!Number.isFinite(qtd) || qtd <= 0) erros.push("Preencha quantidade_suportes com número maior que zero.");
+        $("#avisosSolicitacao").innerHTML = erros.length
+          ? `<div class="error-list">${erros.map(e => `<div>${esc(e)}</div>`).join("")}</div>`
+          : "";
+        return erros;
+      }
+
+      function filtrarResultadoPorSolicitacao(data, valores) {
+        const filtro = (row) => linhaBateSelecao(row, valores, "");
+        const materiais = (data.materiais || []).filter(filtro);
+        const componentes = (data.componentes_referenciados || []).filter(filtro);
+        const dimensoes = (data.dimensoes_suporte || []).filter(filtro);
+        return {
+          ...data,
+          materiais,
+          componentes_referenciados: componentes,
+          dimensoes_suporte: dimensoes,
+          aviso_componentes: (!materiais.length && componentes.length)
+            ? "Este suporte é composto por componentes referenciados. Consulte a tabela de componentes abaixo."
+            : data.aviso_componentes
+        };
+      }
+
+      function renderMateriais(rows) {
+        if (!rows.length) return '<div class="empty">Nenhum material direto encontrado para os filtros informados.</div>';
+        const qtdSuportes = quantidadeSuportes();
+        return `
+          <div class="scroll">
+            <table>
+              <thead><tr>
+                <th>Código do suporte</th><th>Folha ET</th><th>Item</th><th>Tipo</th><th>DN / Faixa</th>
+                <th>Material</th><th>Dimensão / Especificação</th><th>Quantidade unitária</th><th>Quantidade de suportes</th><th>Quantidade total</th><th>Unidade</th>
+                <th>Tipo de material</th><th>Condicional</th><th>Condicao</th><th>Status de validacao</th><th>Observacao</th>
+              </tr></thead>
+              <tbody>${rows.map(r => `<tr>
+                <td>${esc(r.codigo_suporte)}</td><td>${esc(r.folha_et)}</td><td>${esc(r.item)}</td><td>${esc(r.tipo)}</td><td>${esc(dnFaixa(r))}</td>
+                <td>${esc(r.material)}<br>${materialMarkers(r)}</td><td>${esc(r.dimensao_especificacao)}</td><td>${esc(r.quantidade_unitaria)}</td><td>${esc(formatNumero(r._quantidade_suportes || qtdSuportes))}</td><td>${quantidadeTotal(r.quantidade_unitaria, r._quantidade_suportes || qtdSuportes, r.unidade)}</td><td>${esc(r.unidade)}</td>
+                <td>${esc(r.tipo_material)}</td><td>${esc(r.condicional)}</td><td>${esc(r.condicao_material)}</td><td>${esc(r.status_validacao_material)}</td><td>${esc(r.observacao_material)}</td>
+              </tr>`).join("")}</tbody>
+            </table>
+          </div>`;
+      }
+
+      function renderComponentes(rows) {
+        if (!rows.length) return '<div class="empty">Nenhum componente referenciado encontrado para este suporte.</div>';
+        const qtdSuportes = quantidadeSuportes();
+        return `
+          <div class="scroll" style="max-height:260px">
+            <table>
+              <thead><tr>
+                <th>Código do suporte</th><th>Item</th><th>Tipo</th><th>Componente referenciado</th>
+                <th>Quantidade unitária</th><th>Quantidade de suportes</th><th>Quantidade total</th><th>Unidade</th><th>Condicional</th><th>Condição de aplicação</th><th>Observação</th>
+              </tr></thead>
+              <tbody>${rows.map(r => `<tr>
+                <td>${esc(r.codigo_suporte)}</td><td>${esc(r.item)}</td><td>${esc(r.tipo)}</td><td>${esc(r.componente_referenciado)}</td>
+                <td>${esc(r.quantidade)}</td><td>${esc(formatNumero(r._quantidade_suportes || qtdSuportes))}</td><td>${quantidadeTotal(r.quantidade, r._quantidade_suportes || qtdSuportes, r.unidade)}</td><td>${esc(r.unidade)}</td><td>${esc(r.condicional)} ${componenteMarkers(r)}</td>
+                <td>${esc(r.condicao_aplicacao)}</td><td>${esc(r.observacao)}</td>
+              </tr>`).join("")}</tbody>
+            </table>
+          </div>`;
+      }
+
+      function renderVariaveis(rows) {
+        if (!rows.length) return '<div class="empty">Nenhuma variavel especifica cadastrada para este suporte.</div>';
+        return `<div class="vars">${rows.map(r => {
+          const obrigatoria = norm(r.obrigatoria) === "sim" ? "danger" : "info";
+          const nome = r.variavel || r.nome_para_tela;
+          return `<span class="pill ${obrigatoria}" title="${esc(val(r.observacao))}">${esc(nome)}${r.obrigatoria ? ` - ${esc(r.obrigatoria)}` : ""}</span>`;
+        }).join("")}</div>`;
+      }
+
+      function renderFolhaReferencia(ref) {
+        if (!ref || !ref.png_url) {
+          return '<div class="empty">Folha ET de referência não vinculada para este suporte.</div>';
+        }
+        return `
+          <div class="sheet-preview">
+            <div class="sheet-preview-head">
+              <span>Folha ET de referência — folha ${esc(ref.folha)}</span>
+              <a href="${esc(ref.pdf_url)}" target="_blank" rel="noopener">Abrir PDF da folha</a>
+            </div>
+            <img src="${esc(ref.png_url)}" alt="Folha ET ${esc(ref.folha)}" loading="lazy" />
+          </div>
+        `;
+      }
+
+      function carregarPedidos() {
+        try { return JSON.parse(localStorage.getItem(PEDIDOS_STORAGE_KEY) || "[]"); } catch { return []; }
+      }
+
+      function salvarPedidos(pedidos) {
+        localStorage.setItem(PEDIDOS_STORAGE_KEY, JSON.stringify(pedidos));
+      }
+
+      function totalItensPedido() {
+        return (pedidoEmMontagem.materiais || []).length + (pedidoEmMontagem.componentes_referenciados || []).length;
+      }
+
+      function valoresUnicos(rows, campo) {
+        return [...new Set((rows || []).map(r => clean(r[campo])).filter(Boolean))];
+      }
+
+      function renderPedidoAtual() {
+        const target = $("#pedidoAtual");
+        if (!target) return;
+        const total = totalItensPedido();
+        if (!total) {
+          target.innerHTML = '<div class="section-title"><span>Relação do pedido em montagem</span><span class="pill info">0 itens</span></div><div class="empty">Consulte um suporte e clique em Adicionar ao pedido para montar a relação final.</div>';
+          atualizarBotaoPedido();
+          return;
+        }
+        target.innerHTML = `
+          <div class="section-title"><span>Relação do pedido em montagem</span><span class="pill info">${total} itens</span></div>
+          <div class="actions" style="margin:8px 0 12px">
+            <button id="gerarPedidoRelacaoBtn" type="button">Gerar Pedido Final</button>
+            <button id="limparPedidoRelacaoBtn" type="button" class="btn-secondary">Limpar relação</button>
+          </div>
+          <div class="summary">
+            <span>Materiais diretos: ${pedidoEmMontagem.materiais.length}</span>
+            <span>Componentes referenciados: ${pedidoEmMontagem.componentes_referenciados.length}</span>
+            <span>Suportes: ${esc(valoresUnicos(pedidoEmMontagem.consultas, "codigo_suporte").join(", "))}</span>
+          </div>
+          <div class="section-title" style="margin-top:12px"><span>Materiais diretos adicionados</span><span class="pill info">${pedidoEmMontagem.materiais.length}</span></div>
+          ${renderMateriais(pedidoEmMontagem.materiais)}
+          <div class="section-title" style="margin-top:14px"><span>Componentes referenciados adicionados</span><span class="pill info">${pedidoEmMontagem.componentes_referenciados.length}</span></div>
+          ${renderComponentes(pedidoEmMontagem.componentes_referenciados)}
+        `;
+        $("#gerarPedidoRelacaoBtn").onclick = gerarPedidoDaRelacao;
+        $("#limparPedidoRelacaoBtn").onclick = () => {
+          if (!confirm("Limpar a relação do pedido em montagem?")) return;
+          pedidoEmMontagem = { materiais: [], componentes_referenciados: [], consultas: [] };
+          renderPedidoAtual();
+        };
+        atualizarBotaoPedido();
+      }
+
+      function adicionarResultadoAoPedido() {
+        if (!resultadoAtual) return alert("Consulte um suporte antes de adicionar ao pedido.");
+        const qtdLinha = quantidadeSuportes();
+        const materiais = (resultadoAtual.materiais || []).map(r => ({ ...r, _quantidade_suportes: qtdLinha }));
+        const componentes = (resultadoAtual.componentes_referenciados || []).map(r => ({ ...r, _quantidade_suportes: qtdLinha }));
+        if (!materiais.length && !componentes.length) return alert("A consulta atual nao possui materiais ou componentes para adicionar.");
+        pedidoEmMontagem.materiais.push(...materiais);
+        pedidoEmMontagem.componentes_referenciados.push(...componentes);
+        pedidoEmMontagem.consultas.push({
+          codigo_suporte: resultadoAtual.codigo_suporte,
+          item: valoresSolicitacao().item || "",
+          tipo: valoresSolicitacao().tipo || "",
+          diametro_tubo: valoresSolicitacao().diametro_tubo || valoresSolicitacao().dn || "",
+          faixa_diametro_tubo: valoresSolicitacao().faixa_diametro_tubo || "",
+          quantidade_suportes: quantidadeSuportes(),
+          aviso_componentes: resultadoAtual.aviso_componentes || "",
+          catalogo: resultadoAtual.catalogo || null,
+          materiais,
+          componentes_referenciados: componentes,
+        });
+        renderPedidoAtual();
+      }
+
+      function montarPedidoDaRelacao() {
+        const primeira = pedidoEmMontagem.consultas[0] || resultadoAtual || {};
+        const p = montarPedidoBase(primeira);
+        const todos = [...pedidoEmMontagem.materiais, ...pedidoEmMontagem.componentes_referenciados];
+        p.codigo_suporte = valoresUnicos(pedidoEmMontagem.consultas, "codigo_suporte").join(", ");
+        p.item = valoresUnicos(pedidoEmMontagem.consultas, "item").join(", ");
+        p.tipo = valoresUnicos(pedidoEmMontagem.consultas, "tipo").join(", ");
+        p.diametro_tubo = valoresUnicos(pedidoEmMontagem.consultas, "diametro_tubo").join(", ");
+        p.faixa_diametro_tubo = valoresUnicos(pedidoEmMontagem.consultas, "faixa_diametro_tubo").join(", ");
+        p.quantidade_suportes = valoresUnicos(pedidoEmMontagem.consultas, "quantidade_suportes").join(", ");
+        p.materiais = pedidoEmMontagem.materiais;
+        p.componentes_referenciados = pedidoEmMontagem.componentes_referenciados;
+        p.pendencias_alertas = pedidoEmMontagem.consultas.flatMap(c => pedidoAlertas(c));
+        p.observacoes = `Pedido gerado a partir de ${pedidoEmMontagem.consultas.length} consulta(s) do catalogo de suportes, com ${todos.length} item(ns) na relacao.`;
+        p._from_relacao = true;
+        return p;
+      }
+
+      function gerarPedidoDaRelacao() {
+        if (!totalItensPedido()) {
+          alert("Adicione materiais ao pedido antes de gerar o pedido final.");
+          return;
+        }
+        abrirModalPedido(montarPedidoDaRelacao(), "novo");
+      }
+
+      function proximoNumeroPedido() {
+        const max = carregarPedidos().reduce((acc, p) => {
+          const m = String(p.numero_pedido || "").match(/PED[-_]SUP[-_](\d+)/i);
+          return Math.max(acc, m ? Number(m[1]) : 0);
+        }, 0);
+        return `PED_SUP_${String(max + 1).padStart(3, "0")}`;
+      }
+
+      function pedidoAlertas(data) {
+        const out = [];
+        if (data?.aviso_componentes) out.push({ pendencia: data.aviso_componentes, criticidade: "Informativo", observacao: "Mensagem da consulta." });
+        if (data?.catalogo?.observacao) out.push({ pendencia: "Observacao do catalogo", criticidade: "Informativo", observacao: data.catalogo.observacao });
+        [...(data?.materiais || []), ...(data?.componentes_referenciados || [])].forEach(r => {
+          const status = r.status_validacao_material || r.status_validacao || "";
+          const obs = r.observacao_material || r.observacao || "";
+          if (isPendente(status) || isPendente(obs)) out.push({ pendencia: r.material || r.componente_referenciado || "Item com pendencia", criticidade: "Pendente", observacao: status || obs });
+        });
+        return out;
+      }
+
+      function montarPedidoBase(data) {
+        const dados = valoresSolicitacao();
+        const qtd = quantidadeSuportes();
+        return {
+          id: (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : `pedido-${Date.now()}`,
+          numero_pedido: proximoNumeroPedido(),
+          requisitante: "",
+          data_pedido: new Date().toISOString().slice(0, 10),
+          data_necessidade: "",
+          status_pedido: "Rascunho",
+          projeto: "",
+          linha: "",
+          isometrico: "",
+          codigo_suporte: data.codigo_suporte || $("#codigoSuporte").value,
+          item: dados.item || "",
+          tipo: dados.tipo || "",
+          diametro_tubo: dados.diametro_tubo || dados.dn || "",
+          faixa_diametro_tubo: dados.faixa_diametro_tubo || "",
+          isolamento: dados.isolamento || "",
+          espessura_isolamento: dados.espessura_isolamento || "",
+          quantidade_suportes: Number.isFinite(qtd) ? qtd : "",
+          H: dados.H || dados.h || "",
+          L: dados.L || dados.l || "",
+          M: dados.M || dados.m || "",
+          N: dados.N || dados.n || "",
+          comprimento: dados.comprimento || "",
+          observacoes: "",
+          materiais: data.materiais || [],
+          componentes_referenciados: data.componentes_referenciados || [],
+          pendencias_alertas: pedidoAlertas(data),
+          pdf_gerado: false,
+          criado_em: new Date().toISOString(),
+          atualizado_em: new Date().toISOString(),
+        };
+      }
+
+      function salvarPedido(pedido) {
+        const pedidos = carregarPedidos();
+        const idx = pedidos.findIndex(p => p.id === pedido.id);
+        pedido.atualizado_em = new Date().toISOString();
+        if (idx >= 0) pedidos[idx] = pedido; else pedidos.push(pedido);
+        salvarPedidos(pedidos);
+        return pedido;
+      }
+
+      function camposPedidoHtml(pedido, readonly = false) {
+        const disabled = readonly ? "disabled" : "";
+        const opt = STATUS_PEDIDO.map(s => `<option value="${esc(s)}" ${pedido.status_pedido === s ? "selected" : ""}>${esc(s)}</option>`).join("");
+        const inp = (n, l, t = "text") => `<label>${esc(l)}<input name="${esc(n)}" type="${t}" value="${esc(pedido[n] || "")}" ${disabled}/></label>`;
+        return `<div class="modal-grid">
+          ${inp("numero_pedido", "numero_pedido")}${inp("requisitante", "requisitante")}${inp("data_pedido", "data_pedido", "date")}${inp("data_necessidade", "data_necessidade", "date")}
+          <label>status_pedido<select name="status_pedido" ${disabled}>${opt}</select></label>
+          ${inp("projeto", "projeto")}${inp("linha", "linha")}${inp("isometrico", "isometrico")}${inp("codigo_suporte", "codigo_suporte")}
+          ${inp("item", "item")}${inp("tipo", "tipo")}${inp("diametro_tubo", "diametro_tubo")}${inp("isolamento", "isolamento")}
+          ${inp("quantidade_suportes", "quantidade_suportes", "number")}${inp("H", "H", "number")}${inp("L", "L", "number")}${inp("M", "M", "number")}${inp("N", "N", "number")}${inp("comprimento", "comprimento", "number")}
+        </div><label style="margin-top:10px">observacoes<textarea name="observacoes" rows="4" ${disabled}>${esc(pedido.observacoes || "")}</textarea></label>`;
+      }
+
+      function pedidoFromForm(form, pedido) {
+        const data = { ...pedido };
+        form.querySelectorAll("input, select, textarea").forEach(el => { data[el.name] = clean(el.value); });
+        const qtd = parseNumeroQuantidade(data.quantidade_suportes);
+        if (qtd != null) data.quantidade_suportes = qtd;
+        return data;
+      }
+
+      function abrirModalPedido(pedido, modo = "novo") {
+        const readonly = modo === "visualizar";
+        const overlay = document.createElement("div");
+        overlay.className = "modal-backdrop";
+        overlay.innerHTML = `<div class="modal-panel"><div class="modal-head"><strong>${readonly ? "Visualizar pedido" : "Gerar Pedido"} - ${esc(pedido.numero_pedido)}</strong><button type="button" class="btn-secondary" data-close>Fechar</button></div><div class="modal-body"><form id="pedidoForm">${camposPedidoHtml(pedido, readonly)}<div class="modal-actions"><button type="button" class="btn-secondary" data-close>Cancelar</button>${readonly ? "" : '<button type="submit">Salvar Pedido</button>'}<button type="button" data-pdf>Gerar PDF</button></div></form></div></div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener("click", ev => { if (ev.target === overlay || ev.target.dataset.close !== undefined) overlay.remove(); });
+        const form = overlay.querySelector("#pedidoForm");
+        form.addEventListener("submit", ev => {
+          ev.preventDefault();
+          const salvo = salvarPedido(pedidoFromForm(form, pedido));
+          if (salvo._from_relacao) {
+            pedidoEmMontagem = { materiais: [], componentes_referenciados: [], consultas: [] };
+            renderPedidoAtual();
+          }
+          overlay.remove();
+          renderPedidosPage();
+          alert("Pedido salvo.");
+        });
+        overlay.querySelector("[data-pdf]").onclick = () => {
+          const salvo = salvarPedido(readonly ? pedido : pedidoFromForm(form, pedido));
+          if (salvo._from_relacao) {
+            pedidoEmMontagem = { materiais: [], componentes_referenciados: [], consultas: [] };
+            renderPedidoAtual();
+          }
+          gerarPdfPedido(salvo.id);
+          overlay.remove();
+        };
+      }
+
+      function pdfBox(label, value) {
+        return `<div class="box"><div class="label">${esc(label)}</div><div class="value">${esc(value)}</div></div>`;
+      }
+
+      function tabelaPedidoMateriais(rows, qtd) {
+        if (!rows?.length) return "<p>Nenhum material direto retornado.</p>";
+        return `<table><thead><tr><th>Material</th><th>Dimensao / Especificacao</th><th>Qtd. unitaria</th><th>Qtd. suportes</th><th>Qtd. total</th><th>Unidade</th><th>Condicional</th><th>Status</th><th>Observacao</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.material)}</td><td>${esc(r.dimensao_especificacao)}</td><td>${esc(r.quantidade_unitaria)}</td><td>${esc(r._quantidade_suportes || qtd)}</td><td>${quantidadeTotal(r.quantidade_unitaria, Number(r._quantidade_suportes || qtd), r.unidade)}</td><td>${esc(r.unidade)}</td><td>${esc(r.condicional)}</td><td>${esc(r.status_validacao_material)}</td><td>${esc(r.observacao_material)}</td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function tabelaPedidoComponentes(rows, qtd) {
+        if (!rows?.length) return "<p>Nenhum componente referenciado retornado.</p>";
+        return `<table><thead><tr><th>Componente</th><th>Qtd. unitaria</th><th>Qtd. suportes</th><th>Qtd. total</th><th>Unidade</th><th>Condicional</th><th>Condicao</th><th>Observacao</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.componente_referenciado)}</td><td>${esc(r.quantidade)}</td><td>${esc(r._quantidade_suportes || qtd)}</td><td>${quantidadeTotal(r.quantidade, Number(r._quantidade_suportes || qtd), r.unidade)}</td><td>${esc(r.unidade)}</td><td>${esc(r.condicional)}</td><td>${esc(r.condicao_aplicacao)}</td><td>${esc(r.observacao)}</td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function tabelaPedidoPendencias(rows) {
+        if (!rows?.length) return "<p>Sem pendencias ou alertas registrados.</p>";
+        return `<table><thead><tr><th>Pendencia</th><th>Criticidade</th><th>Observacao</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.pendencia)}</td><td>${esc(r.criticidade)}</td><td>${esc(r.observacao)}</td></tr>`).join("")}</tbody></table>`;
+      }
+
+      function htmlPdfPedido(p) {
+        return `<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"/><title>${esc(p.numero_pedido)}</title><style>body{font-family:Arial,sans-serif;color:#111827;margin:24px;font-size:11px}h1{font-size:18px;color:#063057;text-align:center}h2{font-size:13px;color:#063057;border-bottom:1px solid #cbd5e1;padding-bottom:4px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.box{border:1px solid #d1d5db;padding:6px}.label{font-size:9px;color:#64748b;text-transform:uppercase;font-weight:700}.value{margin-top:2px}table{width:100%;border-collapse:collapse;margin-top:6px}th{background:#063057;color:#fff;font-size:9px;padding:5px;border:1px solid #063057;text-align:left}td{font-size:9px;padding:5px;border:1px solid #d1d5db;vertical-align:top}.actions{text-align:right;margin-bottom:12px}.actions button{background:#185fa5;color:#fff;border:0;border-radius:4px;padding:7px 12px;font-weight:700}@media print{.actions{display:none}body{margin:10mm}}</style></head><body><div class="actions"><button onclick="window.print()">Salvar / Imprimir PDF</button></div><h1>PEDIDO DE SUPORTE / MATERIAL</h1><h2>Cabecalho</h2><div class="grid">${pdfBox("Numero do pedido", p.numero_pedido)}${pdfBox("Requisitante", p.requisitante)}${pdfBox("Data do pedido", p.data_pedido)}${pdfBox("Data de necessidade", p.data_necessidade)}${pdfBox("Status", p.status_pedido)}${pdfBox("Projeto", p.projeto)}${pdfBox("Linha", p.linha)}${pdfBox("Isometrico", p.isometrico)}</div><h2>Dados tecnicos</h2><div class="grid">${pdfBox("Codigo do suporte", p.codigo_suporte)}${pdfBox("Item", p.item)}${pdfBox("Tipo", p.tipo)}${pdfBox("DN / Diametro", p.diametro_tubo || p.faixa_diametro_tubo)}${pdfBox("Isolamento", p.isolamento)}${pdfBox("Quantidade de suportes", p.quantidade_suportes)}${pdfBox("H", p.H)}${pdfBox("L", p.L)}${pdfBox("M", p.M)}${pdfBox("N", p.N)}${pdfBox("Comprimento", p.comprimento)}${pdfBox("Observacoes", p.observacoes)}</div><h2>Tabela 1 - Materiais diretos</h2>${tabelaPedidoMateriais(p.materiais, p.quantidade_suportes)}<h2>Tabela 2 - Componentes referenciados</h2>${tabelaPedidoComponentes(p.componentes_referenciados, p.quantidade_suportes)}<h2>Tabela 3 - Pendencias / alertas</h2>${tabelaPedidoPendencias(p.pendencias_alertas)}</body></html>`;
+      }
+
+      function gerarPdfPedido(id) {
+        const pedidos = carregarPedidos();
+        const p = pedidos.find(x => x.id === id);
+        if (!p) return;
+        p.pdf_gerado = true;
+        salvarPedidos(pedidos);
+        const win = window.open("", "_blank");
+        if (!win) return alert("Permita pop-ups para gerar o PDF.");
+        win.document.open();
+        win.document.write(htmlPdfPedido(p));
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 350);
+        renderPedidosPage();
+      }
+
+      function excluirPedido(id) {
+        if (!confirm("Excluir este pedido?")) return;
+        salvarPedidos(carregarPedidos().filter(p => p.id !== id));
+        renderPedidosPage();
+      }
+
+      function atualizarStatusPedido(id, status) {
+        const pedidos = carregarPedidos();
+        const p = pedidos.find(x => x.id === id);
+        if (!p) return;
+        p.status_pedido = status;
+        p.atualizado_em = new Date().toISOString();
+        salvarPedidos(pedidos);
+        renderPedidosPage();
+      }
+
+      function tabelaPedidosControle(pedidos) {
+        return `<div class="scroll"><table><thead><tr><th>Numero do pedido</th><th>Requisitante</th><th>Data pedido</th><th>Data necessidade</th><th>Codigo</th><th>Item</th><th>Tipo</th><th>DN</th><th>Quantidade</th><th>Status</th><th>PDF gerado</th><th>Acoes</th></tr></thead><tbody>${pedidos.map(p => `<tr><td>${esc(p.numero_pedido)}</td><td>${esc(p.requisitante)}</td><td>${esc(p.data_pedido)}</td><td>${esc(p.data_necessidade)}</td><td>${esc(p.codigo_suporte)}</td><td>${esc(p.item)}</td><td>${esc(p.tipo)}</td><td>${esc(p.diametro_tubo || p.faixa_diametro_tubo)}</td><td>${esc(p.quantidade_suportes)}</td><td><select data-status="${esc(p.id)}">${STATUS_PEDIDO.map(s => `<option value="${esc(s)}" ${p.status_pedido === s ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></td><td>${p.pdf_gerado ? "Sim" : "Nao"}</td><td style="white-space:nowrap"><button type="button" class="btn-secondary" data-view="${esc(p.id)}">Visualizar pedido</button> <button type="button" data-pdf="${esc(p.id)}">Baixar PDF</button> <button type="button" class="btn-danger" data-delete="${esc(p.id)}">Excluir</button></td></tr>`).join("")}</tbody></table></div>`;
+      }
+
+      function renderPedidosPage() {
+        document.title = "Pedidos de Material";
+        document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("active", a.getAttribute("href") === "/pedidos-material"));
+        const target = $("#pedidosControle");
+        const main = target || document.querySelector(".content");
+        const pedidos = carregarPedidos();
+        main.innerHTML = `${target ? "" : '<div class="topbar"><div><h1>Pedidos de Material</h1><div class="sub">Controle local de pedidos tecnicos simples de materiais.</div></div></div>'}<div class="section-title"><span>Pedidos gerados</span><span class="pill info">${pedidos.length} pedidos</span></div>${pedidos.length ? tabelaPedidosControle(pedidos) : '<div class="empty">Nenhum pedido salvo. Consulte o catalogo de suportes, levante os materiais e clique em Gerar Pedido.</div>'}`;
+        main.querySelectorAll("[data-view]").forEach(btn => btn.onclick = () => abrirModalPedido(pedidos.find(p => p.id === btn.dataset.view), "visualizar"));
+        main.querySelectorAll("[data-pdf]").forEach(btn => btn.onclick = () => gerarPdfPedido(btn.dataset.pdf));
+        main.querySelectorAll("[data-delete]").forEach(btn => btn.onclick = () => excluirPedido(btn.dataset.delete));
+        main.querySelectorAll("[data-status]").forEach(sel => sel.onchange = () => atualizarStatusPedido(sel.dataset.status, sel.value));
+      }
+
+      function renderResultado(data) {
+        resultadoAtual = data;
+        const aviso = data.aviso_componentes ? `<div class="notice">${esc(data.aviso_componentes)}</div>` : "";
+        const subtitulo = data.catalogo
+          ? `${esc(val(data.catalogo.descricao))} | Folha ET ${esc(val(data.catalogo.folha_et))}`
+          : `Suporte ${esc(data.codigo_suporte)}`;
+        const dados = valoresSolicitacao();
+        const resumoDados = Object.entries(dados)
+          .filter(([, v]) => v)
+          .map(([k, v]) => `<span>${esc(k)}: ${esc(v)}</span>`)
+          .join("");
+        $("#resultado").innerHTML = `
+          <div class="section-title">
+            <span>${esc(data.codigo_suporte)}</span>
+            <span class="muted">${subtitulo}</span>
+          </div>
+          <div class="actions" style="margin:10px 0 12px">
+            <button id="adicionarAoPedidoBtn" type="button">Adicionar ao pedido</button>
+          </div>
+          ${resumoDados ? `<div class="summary">${resumoDados}</div>` : ""}
+          ${aviso}
+          <div class="section-title" style="margin-top:12px"><span>Materiais diretos</span><span class="pill info">${data.materiais.length}</span></div>
+          ${renderMateriais(data.materiais)}
+          <div class="section-title" style="margin-top:14px"><span>Componentes referenciados</span><span class="pill info">${data.componentes_referenciados.length}</span></div>
+          ${renderComponentes(data.componentes_referenciados)}
+          ${renderFolhaReferencia(data.folha_referencia)}
+          <div class="section-title" style="margin-top:14px"><span>Dimensoes necessarias para solicitacao</span><span class="pill info">${data.variaveis_suporte.length}</span></div>
+          ${renderVariaveis(data.variaveis_suporte)}
+          <div class="muted" style="margin-top:12px">Consulta tecnica apenas. Nao calcula MTO, nao explode componentes referenciados e nao altera dados do catalogo.</div>
+        `;
+        $("#adicionarAoPedidoBtn").onclick = adicionarResultadoAoPedido;
+        atualizarBotaoPedido();
+      }
+
+      async function carregarCodigos() {
+        const resumo = await api("/api/suportes/resumo");
+        $("#codigoSuporte").innerHTML = '<option value="">Selecione...</option>' + (resumo.codigos_suporte || [])
+          .map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+      }
+
+      async function carregarSuporteSelecionado() {
+        const codigo = $("#codigoSuporte").value.trim();
+        resultadoAtual = null;
+        atualizarBotaoPedido();
+        $("#resultado").innerHTML = '<div class="empty">Informe os dados da solicitação e consulte para ver materiais, componentes e dimensões necessárias.</div>';
+        if (!codigo) {
+          renderDadosSolicitacao(null);
+          return;
+        }
+        $("#dadosSolicitacao").innerHTML = '<div class="empty">Carregando variáveis do suporte...</div>';
+        try {
+          const data = await api("/api/suportes/consulta?" + new URLSearchParams({ codigo_suporte: codigo }).toString());
+          renderDadosSolicitacao(data);
+          $("#resultado").innerHTML = `
+            <div class="section-title">
+              <span>${esc(data.codigo_suporte)}</span>
+              <span class="muted">Selecione os dados da solicitação para consultar os materiais.</span>
+            </div>
+            ${renderFolhaReferencia(data.folha_referencia)}
+          `;
+        } catch (e) {
+          renderDadosSolicitacao(null);
+          $("#dadosSolicitacao").innerHTML = `<div class="notice">Erro ao carregar suporte: ${esc(e.message)}</div>`;
+        }
+      }
+
+      async function consultar() {
+        const codigo = $("#codigoSuporte").value.trim();
+        if (!codigo) {
+          $("#resultado").innerHTML = '<div class="notice">Selecione um código de suporte.</div>';
+          return;
+        }
+        const erros = validarSolicitacao();
+        if (erros.length) return;
+        const params = new URLSearchParams({ codigo_suporte: codigo });
+        const dados = valoresSolicitacao();
+        const item = dados.item || "";
+        const tipo = dados.tipo || "";
+        const dn = dados.dn || dados.DN || dados.diametro_tubo || dados.faixa_diametro_tubo || "";
+        if (item) params.set("item", item);
+        if (tipo) params.set("tipo", tipo);
+        if (dn) params.set("dn", dn);
+        resultadoAtual = null;
+        atualizarBotaoPedido();
+        $("#resultado").innerHTML = '<div class="empty">Consultando...</div>';
+        try {
+          const data = await api("/api/suportes/consulta?" + params.toString());
+          renderResultado(filtrarResultadoPorSolicitacao(data, dados));
+        } catch (e) {
+          $("#resultado").innerHTML = `<div class="notice">Erro na consulta: ${esc(e.message)}</div>`;
+        }
+      }
+
+      $("#consultarBtn").addEventListener("click", consultar);
+      $("#gerarPedidoTopoBtn").addEventListener("click", () => {
+        if (!totalItensPedido()) {
+          alert("Adicione materiais ao pedido antes de gerar o pedido final.");
+          return;
+        }
+        gerarPedidoDaRelacao();
+      });
+      $("#codigoSuporte").addEventListener("change", carregarSuporteSelecionado);
+      $("#dadosSolicitacao").addEventListener("change", ev => {
+        if (suporteAtual && ev.target.matches("select")) {
+          limparDepoisDoCampo(ev.target.name);
+          renderDadosSolicitacao(suporteAtual);
+        }
+      });
+      $("#limparBtn").addEventListener("click", () => {
+        $("#codigoSuporte").value = "";
+        resultadoAtual = null;
+        pedidoEmMontagem = { materiais: [], componentes_referenciados: [], consultas: [] };
+        atualizarBotaoPedido();
+        renderPedidoAtual();
+        renderDadosSolicitacao(null);
+        $("#resultado").innerHTML = '<div class="empty">Informe o codigo do suporte e consulte para ver materiais, componentes e dimensoes necessarias.</div>';
+      });
+      $("#dadosSolicitacao").addEventListener("keydown", ev => { if (ev.key === "Enter") consultar(); });
+
+      renderPedidoAtual();
+      renderPedidosPage();
+      atualizarBotaoPedido();
+      carregarCodigos();
+    </script>
+  </body>
+</html>

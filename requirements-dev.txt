@@ -1,0 +1,7 @@
+# Dependências de desenvolvimento e teste.
+# Inclui todas as dependências de produção + ferramentas de teste.
+# Uso: pip install -r requirements-dev.txt
+-r requirements.txt
+
+pytest>=8.0
+httpx>=0.27        # exigido por fastapi.testclient.TestClient (testes de router/export)

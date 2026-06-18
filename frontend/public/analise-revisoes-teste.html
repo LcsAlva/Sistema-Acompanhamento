@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analise de Revisoes</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #f6f7f9; color: #111827; }
+    main { padding: 24px; max-width: 1360px; margin: 0 auto; }
+    h1 { margin: 0; font-size: 22px; }
+    .sub { margin-top: 4px; color: #6b7280; font-size: 13px; }
+    .toolbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    input, select, textarea { border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; }
+    button { border: 0; border-radius: 6px; background: #0f4c81; color: white; padding: 8px 12px; cursor: pointer; font-weight: 600; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; margin-top: 16px; align-items: start; }
+    .panel, aside { background: white; border: 1px solid #e5e7eb; border-radius: 8px; }
+    .panel { overflow: hidden; }
+    .scroll { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 1120px; }
+    th { text-align: left; padding: 9px 10px; font-size: 11px; color: #6b7280; text-transform: uppercase; background: #f9fafb; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+    td { padding: 9px 10px; font-size: 12px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+    tr { cursor: pointer; }
+    tr.active { background: #eff6ff; }
+    aside { padding: 16px; }
+    label { display: block; margin: 10px 0 4px; font-size: 11px; text-transform: uppercase; color: #6b7280; }
+    aside input, aside select, aside textarea { width: 100%; box-sizing: border-box; }
+    .alert { margin-top: 10px; padding: 10px; border: 1px solid #fde68a; background: #fffbeb; border-radius: 6px; font-size: 12px; color: #92400e; }
+    .muted { color: #6b7280; font-size: 13px; }
+    .status { font-weight: 700; color: #b45309; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Analise de Revisoes</h1>
+    <div class="sub" id="resumo">Carregando...</div>
+    <div class="toolbar">
+      <input id="q" placeholder="Documento">
+      <select id="status">
+        <option value="">Todos os status</option>
+        <option>Pendente analise</option>
+        <option>Sem impacto</option>
+        <option>Com impacto</option>
+        <option>Revisao tratada</option>
+        <option>Cancelado</option>
+      </select>
+      <button id="btnAtualizar">Atualizar</button>
+    </div>
+    <div class="layout">
+      <section class="panel">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Documento</th><th>Rev. anterior</th><th>Rev. nova</th><th>Deteccao</th>
+                <th>Controle aplicavel</th><th>Controle afetado</th><th>Status controle</th>
+                <th>Status analise</th><th>Impacto</th><th>Acao</th><th>Observacao</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </section>
+      <aside id="aside"><div class="muted">Selecione um evento para registrar a analise.</div></aside>
+    </div>
+  </main>
+  <script>
+    const API = 'http://localhost:8004/api';
+    let eventos = [];
+    let selecionado = null;
+
+    const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    async function carregar() {
+      const q = document.getElementById('q').value.trim();
+      const status = document.getElementById('status').value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+      const res = await fetch(`${API}/revisoes/eventos?${params}`);
+      eventos = await res.json();
+      document.getElementById('resumo').textContent = `${eventos.length} registro(s) de impacto`;
+      renderTabela();
+    }
+
+    function renderTabela() {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = eventos.length ? eventos.map((ev, i) => `
+        <tr data-i="${i}" class="${selecionado && selecionado.id === ev.id ? 'active' : ''}">
+          <td><b>${esc(ev.codigo_documento)}</b>${ev.alertas?.length ? ' ⚠' : ''}</td>
+          <td>${esc(ev.revisao_anterior || '-')}</td>
+          <td>${esc(ev.revisao_nova || '-')}</td>
+          <td>${fmtData(ev.data_deteccao)}</td>
+          <td>${esc(ev.controle_aplicavel || '-')}</td>
+          <td>${esc(ev.codigo_controle_afetado || '-')}</td>
+          <td>${esc(ev.status_controle || '-')}</td>
+          <td><span class="status">${esc(ev.status_analise || '-')}</span></td>
+          <td>${esc(ev.impacto_informado || '-')}</td>
+          <td>${esc(ev.acao_necessaria || '-')}</td>
+          <td>${esc(ev.observacao_impacto || '-')}</td>
+        </tr>`).join('') : '<tr><td colspan="11">Sem eventos de revisao detectados.</td></tr>';
+      [...tbody.querySelectorAll('tr[data-i]')].forEach(tr => tr.onclick = () => abrir(eventos[Number(tr.dataset.i)]));
+    }
+
+    function abrir(ev) {
+      selecionado = ev;
+      renderTabela();
+      document.getElementById('aside').innerHTML = `
+        <div class="muted">Evento ${esc(ev.id_evento_revisao)}</div>
+        <h2 style="font-size:18px;margin:4px 0 0">${esc(ev.codigo_documento)}</h2>
+        <div class="muted">Rev. ${esc(ev.revisao_anterior || '-')} para ${esc(ev.revisao_nova)}</div>
+        ${(ev.alertas || []).map(a => `<div class="alert">${esc(a)}</div>`).join('')}
+        <label>Status da analise</label>
+        <select id="f_status">
+          ${['Pendente analise','Sem impacto','Com impacto','Revisao tratada','Cancelado'].map(s => `<option ${s === ev.status_analise ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <label>Impacto informado</label>
+        <select id="f_impacto">
+          ${['Sem impacto','Impactou quantitativo','Impactou material','Impactou montagem','Impactou medicao/report','Cancelou item','Adicionou item','Alterou especificacao'].map(s => `<option ${s === ev.impacto_informado ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <label>Acao tomada</label>
+        <select id="f_acao">
+          ${['Sem acao necessaria','Atualizar quantitativo','Gerar pedido complementar','Cancelar pedido','Revisar montagem','Revisar report de medicao','Outro'].map(s => `<option ${s === ev.acao_necessaria ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+        <label>Variacao de quantitativo</label>
+        <input id="f_item" placeholder="Item controlavel" value="${esc(ev.variacao?.item_controlavel || '')}">
+        <div class="two" style="margin-top:6px">
+          <input id="f_qtd_ant" type="number" placeholder="Qtd anterior" value="${esc(ev.variacao?.quantidade_anterior ?? '')}">
+          <input id="f_qtd_nova" type="number" placeholder="Qtd nova" value="${esc(ev.variacao?.quantidade_nova ?? '')}">
+        </div>
+        <div class="two" style="margin-top:6px">
+          <input id="f_unidade" placeholder="Unidade" value="${esc(ev.variacao?.unidade || '')}">
+          <select id="f_variacao">
+            ${['Acrescimo','Reducao','Item novo','Item removido','Alteracao de especificacao','A confirmar'].map(s => `<option ${s === ev.variacao?.tipo_variacao ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <label>Observacao</label>
+        <textarea id="f_obs">${esc(ev.observacao_impacto || '')}</textarea>
+        <button style="width:100%;margin-top:12px" onclick="salvar()">Salvar analise</button>
+      `;
+    }
+
+    async function salvar() {
+      if (!selecionado) return;
+      const payload = {
+        status_analise: document.getElementById('f_status').value,
+        impacto_informado: document.getElementById('f_impacto').value,
+        acao_necessaria: document.getElementById('f_acao').value,
+        observacao_impacto: document.getElementById('f_obs').value,
+        item_controlavel: document.getElementById('f_item').value,
+        quantidade_anterior: document.getElementById('f_qtd_ant').value === '' ? null : Number(document.getElementById('f_qtd_ant').value),
+        quantidade_nova: document.getElementById('f_qtd_nova').value === '' ? null : Number(document.getElementById('f_qtd_nova').value),
+        unidade: document.getElementById('f_unidade').value,
+        tipo_variacao: document.getElementById('f_variacao').value,
+        analisado_por: 'usuario'
+      };
+      const res = await fetch(`${API}/revisoes/eventos/${selecionado.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) return alert('Erro ao salvar analise');
+      await carregar();
+      alert('Analise salva.');
+    }
+
+    document.getElementById('btnAtualizar').onclick = carregar;
+    carregar().catch(e => {
+      document.getElementById('resumo').textContent = 'Erro ao carregar: ' + e.message;
+    });
+  </script>
+</body>
+</html>
