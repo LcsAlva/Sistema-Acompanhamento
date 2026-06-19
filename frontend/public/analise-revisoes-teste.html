@@ -9,7 +9,7 @@
     * { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--color-bg); color: var(--color-text); }
     .app-shell { display: flex; min-height: 100vh; overflow: hidden; background: var(--color-bg); }
-    .app-sidebar { width: 220px; min-width: 220px; height: 100vh; display: flex; flex-direction: column; background: var(--color-sidebar); color: #e5e7eb; }
+    .app-sidebar { width: 248px; min-width: 248px; height: 100vh; display: flex; flex-direction: column; background: var(--color-sidebar); color: #e5e7eb; }
     .app-brand { display: flex; gap: 12px; align-items: center; padding: 20px 18px; text-decoration: none; border-bottom: 1px solid rgba(226, 232, 240, 0.1); }
     .app-brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; background: var(--color-primary); color: white; font-size: 12px; font-weight: 800; }
     .app-brand-title { color: #fff; font-size: 15px; font-weight: 700; line-height: 1.2; }
@@ -31,6 +31,10 @@
     .app-header-meta strong { margin-top: 3px; color: var(--color-text); font-size: 12px; font-weight: 600; }
     .module-tabs { position: sticky; top: 86px; z-index: 19; display: flex; gap: 4px; overflow-x: auto; padding: 10px 28px; background: rgba(248, 250, 252, 0.96); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(12px); }
     .module-tab { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; border-radius: 7px; color: var(--color-muted); text-decoration: none; white-space: nowrap; font-size: 13px; font-weight: 600; }
+    .module-tab[href="/integracao-ld"] { order: 1; }
+    .module-tab[href="/conciliacao-sigem"] { order: 2; }
+    .module-tab[href="/motor-medicao"] { order: 3; }
+    .module-tab[href="/analise-revisoes"] { order: 4; }
     .module-tab:hover { color: var(--color-text); background: #eef2ff; }
     .module-tab.is-active { color: var(--color-primary); background: #dbeafe; }
     main { padding: 16px 24px 24px; max-width: 1440px; margin: 0 auto; }
@@ -65,7 +69,7 @@
     .mini-table { margin-top: 12px; max-height: 180px; overflow: auto; border: 1px solid #f3f4f6; border-radius: 6px; }
     .mini-table table { min-width: 860px; }
     .hidden { display: none; }
-    .doc-filters { display: grid; grid-template-columns: minmax(180px, 260px) minmax(160px, 220px) minmax(220px, 1fr) auto auto; gap: 10px; align-items: center; margin: 14px 0; }
+    .doc-filters { display: grid; grid-template-columns: minmax(180px, 260px) minmax(160px, 220px) minmax(220px, 1fr) auto auto auto; gap: 10px; align-items: center; margin: 14px 0; }
     .doc-filters input, .doc-filters select { width: 100%; }
     .doc-list { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
     .doc-list table { min-width: 980px; }
@@ -79,8 +83,14 @@
     .source-tab.is-active { background: #2563eb; color: white; }
     .discipline-block { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
     .discipline-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
+    .discipline-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .discipline-head strong { font-size: 13px; }
     .discipline-head span { color: #64748b; font-size: 12px; }
+    .collapse-btn { width: 28px; height: 28px; display: inline-grid; place-items: center; padding: 0; border: 1px solid #cbd5e1; background: white; color: #0f172a; border-radius: 6px; font-size: 14px; line-height: 1; }
+    .discipline-block.is-collapsed table { display: none; }
+    .discipline-block.is-collapsed .collapse-btn { transform: rotate(-90deg); }
+    .type-row { background: #eef6ff; }
+    .type-row td { color: #0f4c81; font-size: 11px; font-weight: 800; text-transform: uppercase; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -200,6 +210,7 @@
         <select id="filtroStatusControle"><option value="">Todos status</option></select>
         <input id="buscaDocControle" placeholder="Buscar codigo/titulo...">
         <button class="outline" id="btnFiltrarDocsControle">Filtrar</button>
+        <button class="secondary" id="btnOrganizarTipo" type="button">Organizar por tipo</button>
         <span class="count" id="docsSemControleCount">0 documento(s)</span>
       </div>
       <div id="sigemClassificacaoLista" class="doc-list">
@@ -272,6 +283,8 @@
     let docControleSelecionado = null;
     let sourceMode = 'sigem';
     let incluiQuantitativo = true;
+    let organizarPorTipo = false;
+    const disciplinasRecolhidas = new Set();
 
     const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -399,15 +412,59 @@
       }, {});
       const disciplinas = Object.keys(grupos).sort();
       container.innerHTML = disciplinas.length ? disciplinas.map(disc => `
-        <section class="discipline-block">
-          <div class="discipline-head"><strong>${esc(disc)}</strong><span>${grupos[disc].length} documento(s)</span></div>
+        <section class="discipline-block ${disciplinasRecolhidas.has(disc) ? 'is-collapsed' : ''}" data-disc="${esc(disc)}">
+          <div class="discipline-head">
+            <div class="discipline-title">
+              <button class="collapse-btn" type="button" data-disc="${esc(disc)}" title="Agrupar/recolher disciplina">v</button>
+              <strong>${esc(disc)}</strong>
+            </div>
+            <span>${grupos[disc].length} documento(s)</span>
+          </div>
           <table>
             <thead><tr><th>Documento</th><th>Titulo</th><th>Rev</th><th>Status SIGEM</th><th>A4</th><th></th></tr></thead>
-            <tbody>${grupos[disc].map(d => linhaDocumentoClassificacao(d, lista)).join('')}</tbody>
+            <tbody>${linhasGrupoDisciplina(grupos[disc], lista)}</tbody>
           </table>
         </section>
       `).join('') : '<div style="padding:12px">Nenhum documento SIGEM emitido/postado pendente de classificacao com os filtros atuais.</div>';
+      conectarBotoesAgrupamento();
       conectarBotoesClassificacao(lista);
+    }
+
+    function tipoDocumento(codigo) {
+      const match = String(codigo || '').trim().match(/^([A-Za-z]{2,4})-/);
+      return match ? match[1].toUpperCase() : 'OUTROS';
+    }
+
+    function linhasGrupoDisciplina(docsGrupo, lista) {
+      if (!organizarPorTipo) return docsGrupo.map(d => linhaDocumentoClassificacao(d, lista)).join('');
+      const gruposTipo = docsGrupo.reduce((acc, doc) => {
+        const key = tipoDocumento(doc.codigo_documento);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(doc);
+        return acc;
+      }, {});
+      return Object.keys(gruposTipo).sort().map(tipo => `
+        <tr class="type-row"><td colspan="6">${esc(tipo)} - ${gruposTipo[tipo].length} documento(s)</td></tr>
+        ${gruposTipo[tipo].map(d => linhaDocumentoClassificacao(d, lista)).join('')}
+      `).join('');
+    }
+
+    function conectarBotoesAgrupamento() {
+      [...document.querySelectorAll('.collapse-btn')].forEach(btn => {
+        btn.onclick = () => {
+          const disc = btn.dataset.disc;
+          if (disciplinasRecolhidas.has(disc)) disciplinasRecolhidas.delete(disc);
+          else disciplinasRecolhidas.add(disc);
+          renderDocsSemControle();
+        };
+      });
+    }
+
+    function alternarOrganizacaoTipo() {
+      organizarPorTipo = !organizarPorTipo;
+      document.getElementById('btnOrganizarTipo').textContent = organizarPorTipo ? 'Organizacao por tipo ativa' : 'Organizar por tipo';
+      document.getElementById('btnOrganizarTipo').classList.toggle('outline', organizarPorTipo);
+      renderDocsSemControle();
     }
 
     function renderLdManual(lista) {
@@ -614,6 +671,7 @@
     document.getElementById('filtroDisciplinaControle').onchange = renderDocsSemControle;
     document.getElementById('filtroStatusControle').onchange = renderDocsSemControle;
     document.getElementById('buscaDocControle').oninput = renderDocsSemControle;
+    document.getElementById('btnOrganizarTipo').onclick = alternarOrganizacaoTipo;
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
     document.querySelectorAll('#quantToggle button').forEach(btn => {
