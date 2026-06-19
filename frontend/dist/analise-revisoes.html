@@ -120,6 +120,23 @@
     .quant-kpi strong { display: block; color: #0f172a; font-size: 16px; }
     .quant-kpi span { color: #64748b; font-size: 11px; }
     .quant-preview table { min-width: 920px; }
+    .control-hierarchy { display: grid; gap: 14px; margin-top: 14px; }
+    .discipline-control { border: 1px solid #dbeafe; border-radius: 8px; overflow: hidden; background: #fff; }
+    .discipline-control-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; background: #eff6ff; border-bottom: 1px solid #dbeafe; }
+    .discipline-control-head h3 { margin: 0; font-size: 16px; color: #0f172a; }
+    .discipline-control-head p { margin: 3px 0 0; color: #64748b; font-size: 12px; }
+    .area-grid { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 12px; padding: 14px; }
+    .area-control { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #fff; }
+    .area-control-head { padding: 12px; border-bottom: 1px solid #eef2ff; background: #f8fafc; }
+    .area-control-head strong { display: block; font-size: 14px; color: #0f172a; }
+    .area-control-head span { display: block; margin-top: 3px; color: #64748b; font-size: 12px; }
+    .metric-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px; }
+    .metric { padding: 9px; border: 1px solid #e5e7eb; border-radius: 7px; background: #fff; }
+    .metric strong { display: block; color: #0f172a; font-size: 15px; }
+    .metric span { color: #64748b; font-size: 11px; }
+    .control-items { padding: 0 12px 12px; }
+    .control-items table { min-width: 760px; }
+    .control-empty { padding: 14px; color: #64748b; font-size: 13px; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -280,58 +297,9 @@
     </section>
 
     <section class="block hidden" id="controleView">
-      <h2>Controles definidos</h2>
-      <div class="sub">Controles ja classificados, separados pelo tipo de controle. Depois refinamos aqui os padroes de quantitativo e cadastro.</div>
-      <div class="standard-grid">
-        <div class="standard-card">
-          <strong>Tubulacao - Tubos e conexoes</strong>
-          <p>Controle para isometricos, spools, linhas, tubos, conexoes, valvulas, soldas, peso e metros de tubo.</p>
-          <div class="standard-tags"><span>IS</span><span>SP</span><span>Disc. 200</span><span>Linhas</span></div>
-        </div>
-        <div class="standard-card">
-          <strong>Tubulacao - Suportes</strong>
-          <p>Controle para lista de suportes, tags de apoio, grampos, bases, guias, quantidades e vinculo com linhas.</p>
-          <div class="standard-tags"><span>LI-293</span><span>PS</span><span>BA</span><span>GI</span><span>GR</span></div>
-        </div>
-      </div>
-      <div class="quant-preview">
-        <div class="quant-preview-head">
-          <div>
-            <h3>Exemplo preenchido: IS-5275.00-2221-200-E6G-001</h3>
-            <p>Tubulacao - Tubos e conexoes | Linha 6&quot;-GQ-0570-1700-Bc-IQ | Rev. 0 | dados extraidos do PDF recebido.</p>
-          </div>
-          <span class="pill">Modelo de visualizacao</span>
-        </div>
-        <div class="quant-kpis">
-          <div class="quant-kpi"><strong>2</strong><span>itens de tubo</span></div>
-          <div class="quant-kpi"><strong>7</strong><span>spools identificados</span></div>
-          <div class="quant-kpi"><strong>22,40 m</strong><span>tubo 6&quot; SCH 40</span></div>
-          <div class="quant-kpi"><strong>630,86 kg</strong><span>peso tubo 6&quot;</span></div>
-        </div>
-        <div class="scroll">
-          <table>
-            <thead>
-              <tr><th>Item controlavel</th><th>Tipo</th><th>DN</th><th>Qtd/Metro</th><th>Peso</th><th>Referencia</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              <tr><td><b>6&quot;-GQ-0570-1700-Bc-IQ</b></td><td>Tubo PC SC/CC SCH 40 AC API 5L B PSL1</td><td>6&quot;</td><td>22,40 m</td><td>630,86 kg</td><td>PT 1 / IS-001</td><td><span class="pill">Aberto</span></td></tr>
-              <tr><td><b>6&quot;-GQ-0570-1703-Bc-IQ</b></td><td>Continuidade de linha</td><td>6&quot;</td><td>A confirmar</td><td>-</td><td>Continua no desenho</td><td><span class="pill">A validar</span></td></tr>
-              <tr><td><b>SPL01</b></td><td>Spool</td><td>6&quot;</td><td>2 cortes</td><td>107,81 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Aberto</span></td></tr>
-              <tr><td><b>SPL02</b></td><td>Spool</td><td>6&quot;</td><td>1 corte</td><td>74,04 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Aberto</span></td></tr>
-              <tr><td><b>SPL03</b></td><td>Spool</td><td>6&quot;</td><td>1 corte</td><td>179,40 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Aberto</span></td></tr>
-              <tr><td><b>PS-0570-026 / PS-0570-033</b></td><td>Suportes associados</td><td>-</td><td>2 un</td><td>-</td><td>Detectado no isometrico</td><td><span class="pill">Enviar para suportes</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="doc-filters" style="grid-template-columns:minmax(180px,240px) minmax(180px,240px) minmax(220px,1fr) auto auto">
-        <select id="filtroTipoControleLista"><option value="">Todos os tipos</option></select>
-        <select id="filtroAreaControleLista"><option value="">Todas areas</option></select>
-        <input id="buscaControleLista" placeholder="Buscar controle/documento/area...">
-        <button class="outline" id="btnFiltrarControlesLista" type="button">Filtrar</button>
-        <span class="count" id="controlesListaCount">0 controle(s)</span>
-      </div>
-      <div id="controlesAgrupados" class="doc-list"></div>
+      <h2>Controle por disciplina</h2>
+      <div class="sub">Visao organizada por disciplina, area de controle e quantitativos. Os documentos ficam como origem do dado, nao como a lista principal da tela.</div>
+      <div id="controleHierarquia" class="control-hierarchy"></div>
     </section>
 
     <div class="toolbar">
@@ -432,72 +400,113 @@
       }).join('') : '<tr><td colspan="8">Nenhum controle vinculado ainda.</td></tr>';
     }
 
-    function preencherFiltrosControles() {
-      const tipoAtual = document.getElementById('filtroTipoControleLista').value;
-      const areaAtual = document.getElementById('filtroAreaControleLista').value;
-      const tipos = [...new Set(controles.map(c => c.controle_aplicavel || 'Sem tipo').filter(Boolean))].sort();
-      const areas = [...new Set(controles.map(c => c.area || 'Sem area').filter(Boolean))].sort();
-      document.getElementById('filtroTipoControleLista').innerHTML = '<option value="">Todos os tipos</option>' + tipos.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
-      document.getElementById('filtroAreaControleLista').innerHTML = '<option value="">Todas areas</option>' + areas.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
-      document.getElementById('filtroTipoControleLista').value = tipos.includes(tipoAtual) ? tipoAtual : '';
-      document.getElementById('filtroAreaControleLista').value = areas.includes(areaAtual) ? areaAtual : '';
-    }
-
-    function controlesFiltrados() {
-      const tipo = document.getElementById('filtroTipoControleLista').value;
-      const area = document.getElementById('filtroAreaControleLista').value;
-      const busca = document.getElementById('buscaControleLista').value.trim().toLowerCase();
-      return controles.filter(c => {
-        if (tipo && (c.controle_aplicavel || 'Sem tipo') !== tipo) return false;
-        if (area && (c.area || 'Sem area') !== area) return false;
-        if (busca) {
-          const alvo = `${c.codigo_controle || ''} ${c.documento_origem || ''} ${c.controle_aplicavel || ''} ${c.setor || ''} ${c.area || ''}`.toLowerCase();
-          if (!alvo.includes(busca)) return false;
-        }
-        return true;
-      });
-    }
-
-    function linhaControleDefinido(c) {
-      const alertas = alertasControle(c);
-      return `<tr>
-        <td><b>${esc(c.codigo_controle)}</b></td>
-        <td>${esc(c.documento_origem)}</td>
-        <td>${esc(c.revisao_documento || '-')}</td>
-        <td>${esc(c.setor || '-')}</td>
-        <td>${esc(c.area || '-')}</td>
-        <td>${esc(c.status_controle || '-')}</td>
-        <td>${esc(alertas || '-')}</td>
-      </tr>`;
-    }
-
     function renderControlesAgrupados() {
-      const container = document.getElementById('controlesAgrupados');
+      const container = document.getElementById('controleHierarquia');
       if (!container) return;
-      preencherFiltrosControles();
-      const lista = controlesFiltrados();
-      document.getElementById('controlesListaCount').textContent = `${lista.length} controle(s)`;
-      const grupos = lista.reduce((acc, c) => {
-        const key = c.controle_aplicavel || 'Sem tipo';
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(c);
-        return acc;
-      }, {});
-      const tipos = Object.keys(grupos).sort();
-      container.innerHTML = tipos.length ? tipos.map(tipo => `
-        <section class="controle-type-block">
-          <div class="controle-type-head">
-            <strong>${esc(tipo)}</strong>
-            <span>${grupos[tipo].length} controle(s)</span>
+      const tubos = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('tubos'));
+      const suportes = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('suporte'));
+      const outros = controles.filter(c => !tubos.includes(c) && !suportes.includes(c));
+      container.innerHTML = `
+        <section class="discipline-control">
+          <div class="discipline-control-head">
+            <div>
+              <h3>Tubulacao</h3>
+              <p>Disciplina 200, isometricos, spools, listas de suporte e itens controlaveis de montagem.</p>
+            </div>
+            <span class="pill">${tubos.length + suportes.length} controle(s)</span>
           </div>
-          <div class="scroll">
-            <table>
-              <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Setor</th><th>Area</th><th>Status</th><th>Alertas</th></tr></thead>
-              <tbody>${grupos[tipo].map(linhaControleDefinido).join('')}</tbody>
-            </table>
+          <div class="area-grid">
+            ${areaTubosConexoes(tubos)}
+            ${areaSuportesTubulacao(suportes)}
           </div>
         </section>
-      `).join('') : '<div style="padding:14px" class="muted">Nenhum controle encontrado.</div>';
+        ${outros.length ? areaOutrosControles(outros) : ''}
+      `;
+    }
+
+    function resumoStatus(lista) {
+      return {
+        abertos: lista.filter(c => (c.status_controle || '').toLowerCase().includes('aberto')).length,
+        revisao: lista.filter(c => (c.status_controle || '').toLowerCase().includes('revis')).length,
+        total: lista.length,
+      };
+    }
+
+    function areaTubosConexoes(lista) {
+      const r = resumoStatus(lista);
+      return `
+        <article class="area-control">
+          <div class="area-control-head">
+            <strong>Area: Tubos e conexoes</strong>
+            <span>Linhas, isometricos, spools, metros, peso, DN e soldas.</span>
+          </div>
+          <div class="metric-list">
+            <div class="metric"><strong>${r.total}</strong><span>controles cadastrados</span></div>
+            <div class="metric"><strong>2</strong><span>itens de tubo no exemplo</span></div>
+            <div class="metric"><strong>7</strong><span>spools no exemplo</span></div>
+            <div class="metric"><strong>22,40 m</strong><span>tubo 6&quot; SCH 40</span></div>
+            <div class="metric"><strong>630,86 kg</strong><span>peso controlado</span></div>
+            <div class="metric"><strong>${r.revisao}</strong><span>em revisao</span></div>
+          </div>
+          <div class="control-items">
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Item controlavel</th><th>Unidade</th><th>Qtd atual</th><th>Peso</th><th>Origem</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td><b>6&quot;-GQ-0570-1700-Bc-IQ</b></td><td>m</td><td>22,40</td><td>630,86 kg</td><td>IS-5275.00-2221-200-E6G-001</td><td><span class="pill">Exemplo</span></td></tr>
+                  <tr><td><b>SPL01 a SPL07</b></td><td>un</td><td>7</td><td>792,39 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Exemplo</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function areaSuportesTubulacao(lista) {
+      const r = resumoStatus(lista);
+      return `
+        <article class="area-control">
+          <div class="area-control-head">
+            <strong>Area: Suportes</strong>
+            <span>Tags de suporte, apoio, guia, base, grampo, quantidade e linha vinculada.</span>
+          </div>
+          <div class="metric-list">
+            <div class="metric"><strong>${r.total}</strong><span>controles cadastrados</span></div>
+            <div class="metric"><strong>33</strong><span>tags detectadas nos PDFs</span></div>
+            <div class="metric"><strong>2</strong><span>suportes no exemplo</span></div>
+            <div class="metric"><strong>PS</strong><span>padrao principal</span></div>
+            <div class="metric"><strong>BA/GI/GR</strong><span>outros tipos</span></div>
+            <div class="metric"><strong>${r.revisao}</strong><span>em revisao</span></div>
+          </div>
+          <div class="control-items">
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Item controlavel</th><th>Tipo</th><th>Qtd atual</th><th>Linha vinculada</th><th>Origem</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td><b>PS-0570-026</b></td><td>Suporte</td><td>1 un</td><td>6&quot;-GQ-0570-1700-Bc-IQ</td><td>IS-001 / LI-293</td><td><span class="pill">Exemplo</span></td></tr>
+                  <tr><td><b>PS-0570-033</b></td><td>Suporte</td><td>1 un</td><td>6&quot;-GQ-0570-1700-Bc-IQ</td><td>IS-001 / LI-293</td><td><span class="pill">Exemplo</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function areaOutrosControles(lista) {
+      return `
+        <section class="discipline-control">
+          <div class="discipline-control-head">
+            <div>
+              <h3>Outras disciplinas</h3>
+              <p>Controles ja cadastrados que ainda nao possuem padrao de quantitativo especifico nesta tela.</p>
+            </div>
+            <span class="pill">${lista.length} controle(s)</span>
+          </div>
+          <div class="control-empty">Eles continuam registrados, mas nao aparecem como lista completa aqui. A proxima etapa e criar o mesmo padrao por disciplina.</div>
+        </section>
+      `;
     }
 
     function aplicarView() {
@@ -1033,10 +1042,6 @@
     document.getElementById('btnSelecionarVisiveis').onclick = selecionarVisiveis;
     document.getElementById('btnLimparSelecao').onclick = limparSelecao;
     document.getElementById('btnClassificarSelecionados').onclick = classificarSelecionados;
-    document.getElementById('btnFiltrarControlesLista').onclick = renderControlesAgrupados;
-    document.getElementById('filtroTipoControleLista').onchange = renderControlesAgrupados;
-    document.getElementById('filtroAreaControleLista').onchange = renderControlesAgrupados;
-    document.getElementById('buscaControleLista').oninput = renderControlesAgrupados;
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
     window.addEventListener('popstate', aplicarView);
