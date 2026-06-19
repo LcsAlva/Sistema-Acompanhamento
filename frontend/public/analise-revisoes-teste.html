@@ -6,13 +6,17 @@
   <title>Analise de Revisoes</title>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; background: #f6f7f9; color: #111827; }
-    main { padding: 24px; max-width: 1360px; margin: 0 auto; }
+    main { padding: 24px; max-width: 1440px; margin: 0 auto; }
     h1 { margin: 0; font-size: 22px; }
+    h2 { margin: 0 0 10px; font-size: 15px; color: #111827; }
     .sub { margin-top: 4px; color: #6b7280; font-size: 13px; }
     .toolbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-    input, select, textarea { border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; }
+    input, select, textarea { border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; box-sizing: border-box; }
     button { border: 0; border-radius: 6px; background: #0f4c81; color: white; padding: 8px 12px; cursor: pointer; font-weight: 600; }
-    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; margin-top: 16px; align-items: start; }
+    button.secondary { background: #eef2ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    button.outline { background: white; color: #1d4ed8; border: 1px solid #2563eb; }
+    .block { margin-top: 16px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; margin-top: 16px; align-items: start; }
     .panel, aside { background: white; border: 1px solid #e5e7eb; border-radius: 8px; }
     .panel { overflow: hidden; }
     .scroll { overflow-x: auto; }
@@ -23,17 +27,110 @@
     tr.active { background: #eff6ff; }
     aside { padding: 16px; }
     label { display: block; margin: 10px 0 4px; font-size: 11px; text-transform: uppercase; color: #6b7280; }
-    aside input, aside select, aside textarea { width: 100%; box-sizing: border-box; }
+    aside input, aside select, aside textarea { width: 100%; }
     .alert { margin-top: 10px; padding: 10px; border: 1px solid #fde68a; background: #fffbeb; border-radius: 6px; font-size: 12px; color: #92400e; }
     .muted { color: #6b7280; font-size: 13px; }
     .status { font-weight: 700; color: #b45309; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .form-grid { display: grid; grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(150px, 1fr)); gap: 8px; align-items: end; }
+    .checks { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; color: #374151; font-size: 12px; }
+    .checks label { margin: 0; display: inline-flex; align-items: center; gap: 5px; text-transform: none; color: #374151; font-size: 12px; }
+    .mini-table { margin-top: 12px; max-height: 180px; overflow: auto; border: 1px solid #f3f4f6; border-radius: 6px; }
+    .mini-table table { min-width: 860px; }
+    .hidden { display: none; }
+    .doc-filters { display: grid; grid-template-columns: minmax(180px, 260px) minmax(160px, 220px) minmax(220px, 1fr) auto auto; gap: 10px; align-items: center; margin: 14px 0; }
+    .doc-filters input, .doc-filters select { width: 100%; }
+    .doc-list { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .doc-list table { min-width: 980px; }
+    .doc-list tr { cursor: default; }
+    .code { font-weight: 700; color: #0f172a; }
+    .pill { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 10px; border-radius: 999px; background: #f3f4f6; color: #111827; font-size: 11px; font-weight: 700; }
+    .count { color: #64748b; font-size: 12px; white-space: nowrap; }
+    .form-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 6px; }
+    @media (max-width: 980px) {
+      .layout, .form-grid, .doc-filters { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <main>
     <h1>Analise de Revisoes</h1>
     <div class="sub" id="resumo">Carregando...</div>
+
+    <section class="block">
+      <h2>Documentos LD sem controle atribuido</h2>
+      <div class="sub">Selecione primeiro o documento novo ou ainda sem controle. Depois escolha o tipo de controle, setor e area que devem acompanhar futuras revisoes.</div>
+      <div class="doc-filters">
+        <select id="filtroDisciplinaControle"><option value="">Todas disciplinas</option></select>
+        <select id="filtroStatusControle"><option value="">Todos status</option></select>
+        <input id="buscaDocControle" placeholder="Buscar codigo/titulo...">
+        <button class="outline" id="btnFiltrarDocsControle">Filtrar</button>
+        <span class="count" id="docsSemControleCount">0 documento(s)</span>
+      </div>
+      <div class="doc-list">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Documento</th><th>Titulo</th><th>Disciplina</th><th>Rev</th><th>Status</th><th>A4</th><th></th></tr>
+            </thead>
+            <tbody id="tbodyDocsSemControle"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="formControleBox" class="hidden" style="margin-top:16px">
+        <div class="form-head">
+          <div>
+            <h2 id="formControleTitulo">Vincular controle</h2>
+            <div class="sub" id="formControleSub">Informe como este documento sera acompanhado.</div>
+          </div>
+          <button class="secondary" id="btnCancelarControle" type="button">Cancelar</button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label>Documento LD</label>
+            <input id="docBusca" readonly>
+          </div>
+          <div>
+            <label>Tipo de controle</label>
+            <select id="controleTipo">
+              <option>Quantitativo</option>
+              <option>Pedido de material</option>
+              <option>Material</option>
+              <option>Montagem</option>
+              <option>Medicao/report</option>
+              <option>Geral</option>
+            </select>
+          </div>
+          <div>
+            <label>Setor</label>
+            <input id="setor" placeholder="Ex.: Engenharia">
+          </div>
+          <div>
+            <label>Area</label>
+            <input id="area" placeholder="Ex.: Civil / Tubulacao">
+          </div>
+          <button id="btnCriarControle">Vincular controle</button>
+        </div>
+        <div class="checks">
+          <label><input id="temPedido" type="checkbox"> Pedido emitido</label>
+          <label><input id="temMaterial" type="checkbox"> Material solicitado/recebido</label>
+          <label><input id="temMontagem" type="checkbox"> Montagem/execucao registrada</label>
+          <label><input id="temReport" type="checkbox"> Ja entrou em medicao/report</label>
+        </div>
+        <div class="two" style="margin-top:8px">
+          <input id="numeroPedido" placeholder="Numero do pedido, se houver">
+          <input id="statusPedido" placeholder="Status do pedido, se houver">
+        </div>
+      </div>
+      <div class="mini-table">
+        <table>
+          <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Tipo</th><th>Setor</th><th>Area</th><th>Status</th><th>Alertas</th></tr></thead>
+          <tbody id="tbodyControles"></tbody>
+        </table>
+      </div>
+    </section>
+
     <div class="toolbar">
       <input id="q" placeholder="Documento">
       <select id="status">
@@ -44,8 +141,10 @@
         <option>Revisao tratada</option>
         <option>Cancelado</option>
       </select>
-      <button id="btnAtualizar">Atualizar</button>
+      <button id="btnAtualizar">Atualizar eventos</button>
+      <button class="secondary" onclick="location.href='/integracao-ld'">Voltar para Documentos</button>
     </div>
+
     <div class="layout">
       <section class="panel">
         <div class="scroll">
@@ -53,7 +152,7 @@
             <thead>
               <tr>
                 <th>Documento</th><th>Rev. anterior</th><th>Rev. nova</th><th>Deteccao</th>
-                <th>Controle aplicavel</th><th>Controle afetado</th><th>Status controle</th>
+                <th>Controle aplicavel</th><th>Setor</th><th>Area</th><th>Controle afetado</th><th>Status controle</th>
                 <th>Status analise</th><th>Impacto</th><th>Acao</th><th>Observacao</th>
               </tr>
             </thead>
@@ -65,12 +164,141 @@
     </div>
   </main>
   <script>
-    const API = 'http://localhost:8004/api';
+    const API = '/api';
     let eventos = [];
+    let controles = [];
+    let docs = [];
     let selecionado = null;
+    let docControleSelecionado = null;
 
     const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    async function carregarDocs() {
+      const res = await fetch(`${API}/ld/documentos`);
+      docs = await res.json();
+      preencherFiltrosDocs();
+      renderDocsSemControle();
+    }
+
+    async function carregarControles() {
+      const res = await fetch(`${API}/revisoes/controles`);
+      controles = await res.json();
+      const tbody = document.getElementById('tbodyControles');
+      tbody.innerHTML = controles.length ? controles.map(c => {
+        const alertas = [c.tem_pedido && 'pedido', c.tem_material && 'material', c.tem_montagem && 'montagem', c.entrou_medicao_report && 'report'].filter(Boolean).join(', ');
+        return `<tr>
+          <td><b>${esc(c.codigo_controle)}</b></td>
+          <td>${esc(c.documento_origem)}</td>
+          <td>${esc(c.revisao_documento || '-')}</td>
+          <td>${esc(c.controle_aplicavel || '-')}</td>
+          <td>${esc(c.setor || '-')}</td>
+          <td>${esc(c.area || '-')}</td>
+          <td>${esc(c.status_controle || '-')}</td>
+          <td>${esc(alertas || '-')}</td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="8">Nenhum controle vinculado ainda.</td></tr>';
+      renderDocsSemControle();
+    }
+
+    function preencherFiltrosDocs() {
+      const disciplinas = [...new Set(docs.map(d => d.disciplina).filter(Boolean))].sort();
+      const status = [...new Set(docs.map(d => d.status).filter(Boolean))].sort();
+      const disciplinaAtual = document.getElementById('filtroDisciplinaControle').value;
+      const statusAtual = document.getElementById('filtroStatusControle').value;
+      document.getElementById('filtroDisciplinaControle').innerHTML = '<option value="">Todas disciplinas</option>' + disciplinas.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      document.getElementById('filtroStatusControle').innerHTML = '<option value="">Todos status</option>' + status.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      document.getElementById('filtroDisciplinaControle').value = disciplinaAtual;
+      document.getElementById('filtroStatusControle').value = statusAtual;
+    }
+
+    function docsSemControleFiltrados() {
+      const vinculados = new Set(controles.map(c => c.documento_origem));
+      const disciplina = document.getElementById('filtroDisciplinaControle').value;
+      const status = document.getElementById('filtroStatusControle').value;
+      const busca = document.getElementById('buscaDocControle').value.trim().toLowerCase();
+      return docs.filter(d => {
+        if (vinculados.has(d.codigo_documento)) return false;
+        if (disciplina && d.disciplina !== disciplina) return false;
+        if (status && d.status !== status) return false;
+        if (busca) {
+          const texto = `${d.codigo_documento || ''} ${d.titulo || ''}`.toLowerCase();
+          if (!texto.includes(busca)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderDocsSemControle() {
+      const tbody = document.getElementById('tbodyDocsSemControle');
+      if (!tbody) return;
+      const lista = docsSemControleFiltrados();
+      document.getElementById('docsSemControleCount').textContent = `${lista.length} documento(s)`;
+      tbody.innerHTML = lista.length ? lista.map((d, i) => `
+        <tr>
+          <td class="code">${esc(d.codigo_documento)}</td>
+          <td>${esc(d.titulo || '-')}</td>
+          <td>${esc(d.disciplina || '-')}</td>
+          <td>${esc(d.revisao || '-')}</td>
+          <td><span class="pill">${esc(d.status || '-')}</span></td>
+          <td>${esc(d.a4_equivalente ?? d.a4 ?? '-')}</td>
+          <td><button class="outline btn-vincular-doc" data-i="${i}">Vincular a controle</button></td>
+        </tr>`).join('') : '<tr><td colspan="7">Nenhum documento pendente de controle com os filtros atuais.</td></tr>';
+      [...tbody.querySelectorAll('.btn-vincular-doc')].forEach(btn => {
+        btn.onclick = () => selecionarDocControle(lista[Number(btn.dataset.i)]);
+      });
+    }
+
+    function selecionarDocControle(doc) {
+      docControleSelecionado = doc;
+      document.getElementById('docBusca').value = doc.codigo_documento || '';
+      document.getElementById('setor').value = 'Engenharia';
+      document.getElementById('area').value = doc.disciplina || '';
+      document.getElementById('temPedido').checked = false;
+      document.getElementById('temMaterial').checked = false;
+      document.getElementById('temMontagem').checked = false;
+      document.getElementById('temReport').checked = false;
+      document.getElementById('numeroPedido').value = '';
+      document.getElementById('statusPedido').value = '';
+      document.getElementById('formControleTitulo').textContent = `Vincular controle: ${doc.codigo_documento || ''}`;
+      document.getElementById('formControleSub').textContent = `${doc.titulo || 'Documento LD'} | Rev. ${doc.revisao || '-'} | ${doc.disciplina || '-'}`;
+      document.getElementById('formControleBox').classList.remove('hidden');
+      document.getElementById('formControleBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function cancelarControle() {
+      docControleSelecionado = null;
+      document.getElementById('formControleBox').classList.add('hidden');
+    }
+
+    async function criarControle() {
+      const documento = docControleSelecionado?.codigo_documento || document.getElementById('docBusca').value.trim();
+      if (!documento) return alert('Selecione um documento da LD.');
+      const doc = docControleSelecionado || docs.find(d => d.codigo_documento === documento);
+      const payload = {
+        documento_origem: documento,
+        revisao_documento: doc?.revisao || null,
+        controle_aplicavel: document.getElementById('controleTipo').value,
+        setor: document.getElementById('setor').value,
+        area: document.getElementById('area').value || doc?.disciplina || '',
+        tem_pedido: document.getElementById('temPedido').checked,
+        numero_pedido: document.getElementById('numeroPedido').value,
+        status_pedido: document.getElementById('statusPedido').value,
+        tem_material: document.getElementById('temMaterial').checked,
+        tem_montagem: document.getElementById('temMontagem').checked,
+        entrou_medicao_report: document.getElementById('temReport').checked
+      };
+      const res = await fetch(`${API}/revisoes/controles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) return alert('Erro ao vincular controle: ' + await res.text());
+      await carregarControles();
+      cancelarControle();
+      await carregar();
+      alert('Controle vinculado ao documento LD.');
+    }
 
     async function carregar() {
       const q = document.getElementById('q').value.trim();
@@ -80,7 +308,7 @@
       if (status) params.set('status', status);
       const res = await fetch(`${API}/revisoes/eventos?${params}`);
       eventos = await res.json();
-      document.getElementById('resumo').textContent = `${eventos.length} registro(s) de impacto`;
+      document.getElementById('resumo').textContent = `${eventos.length} registro(s) de impacto · ${controles.length} controle(s) vinculado(s)`;
       renderTabela();
     }
 
@@ -93,13 +321,15 @@
           <td>${esc(ev.revisao_nova || '-')}</td>
           <td>${fmtData(ev.data_deteccao)}</td>
           <td>${esc(ev.controle_aplicavel || '-')}</td>
+          <td>${esc(ev.setor || '-')}</td>
+          <td>${esc(ev.area || '-')}</td>
           <td>${esc(ev.codigo_controle_afetado || '-')}</td>
           <td>${esc(ev.status_controle || '-')}</td>
           <td><span class="status">${esc(ev.status_analise || '-')}</span></td>
           <td>${esc(ev.impacto_informado || '-')}</td>
           <td>${esc(ev.acao_necessaria || '-')}</td>
           <td>${esc(ev.observacao_impacto || '-')}</td>
-        </tr>`).join('') : '<tr><td colspan="11">Sem eventos de revisao detectados.</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="13">Sem eventos de revisao detectados.</td></tr>';
       [...tbody.querySelectorAll('tr[data-i]')].forEach(tr => tr.onclick = () => abrir(eventos[Number(tr.dataset.i)]));
     }
 
@@ -110,6 +340,7 @@
         <div class="muted">Evento ${esc(ev.id_evento_revisao)}</div>
         <h2 style="font-size:18px;margin:4px 0 0">${esc(ev.codigo_documento)}</h2>
         <div class="muted">Rev. ${esc(ev.revisao_anterior || '-')} para ${esc(ev.revisao_nova)}</div>
+        <div class="muted" style="margin-top:6px">${esc(ev.controle_aplicavel || '-')} · ${esc(ev.setor || '-')} · ${esc(ev.area || '-')}</div>
         ${(ev.alertas || []).map(a => `<div class="alert">${esc(a)}</div>`).join('')}
         <label>Status da analise</label>
         <select id="f_status">
@@ -166,7 +397,13 @@
     }
 
     document.getElementById('btnAtualizar').onclick = carregar;
-    carregar().catch(e => {
+    document.getElementById('btnCriarControle').onclick = criarControle;
+    document.getElementById('btnCancelarControle').onclick = cancelarControle;
+    document.getElementById('btnFiltrarDocsControle').onclick = renderDocsSemControle;
+    document.getElementById('filtroDisciplinaControle').onchange = renderDocsSemControle;
+    document.getElementById('filtroStatusControle').onchange = renderDocsSemControle;
+    document.getElementById('buscaDocControle').oninput = renderDocsSemControle;
+    Promise.all([carregarDocs(), carregarControles()]).then(carregar).catch(e => {
       document.getElementById('resumo').textContent = 'Erro ao carregar: ' + e.message;
     });
   </script>

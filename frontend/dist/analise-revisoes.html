@@ -14,6 +14,7 @@
     input, select, textarea { border: 1px solid #d1d5db; border-radius: 6px; padding: 8px; font-size: 13px; box-sizing: border-box; }
     button { border: 0; border-radius: 6px; background: #0f4c81; color: white; padding: 8px 12px; cursor: pointer; font-weight: 600; }
     button.secondary { background: #eef2ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    button.outline { background: white; color: #1d4ed8; border: 1px solid #2563eb; }
     .block { margin-top: 16px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; }
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; margin-top: 16px; align-items: start; }
     .panel, aside { background: white; border: 1px solid #e5e7eb; border-radius: 8px; }
@@ -36,8 +37,18 @@
     .checks label { margin: 0; display: inline-flex; align-items: center; gap: 5px; text-transform: none; color: #374151; font-size: 12px; }
     .mini-table { margin-top: 12px; max-height: 180px; overflow: auto; border: 1px solid #f3f4f6; border-radius: 6px; }
     .mini-table table { min-width: 860px; }
+    .hidden { display: none; }
+    .doc-filters { display: grid; grid-template-columns: minmax(180px, 260px) minmax(160px, 220px) minmax(220px, 1fr) auto auto; gap: 10px; align-items: center; margin: 14px 0; }
+    .doc-filters input, .doc-filters select { width: 100%; }
+    .doc-list { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .doc-list table { min-width: 980px; }
+    .doc-list tr { cursor: default; }
+    .code { font-weight: 700; color: #0f172a; }
+    .pill { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 10px; border-radius: 999px; background: #f3f4f6; color: #111827; font-size: 11px; font-weight: 700; }
+    .count { color: #64748b; font-size: 12px; white-space: nowrap; }
+    .form-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 6px; }
     @media (max-width: 980px) {
-      .layout, .form-grid { grid-template-columns: 1fr; }
+      .layout, .form-grid, .doc-filters { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -47,44 +58,70 @@
     <div class="sub" id="resumo">Carregando...</div>
 
     <section class="block">
-      <h2>Vincular controle a documento LD</h2>
-      <div class="sub">Selecione um documento da LD e informe qual controle, setor e area devem ser acompanhados quando houver nova revisao.</div>
-      <div class="form-grid">
-        <div>
-          <label>Documento LD</label>
-          <input id="docBusca" list="docsLd" placeholder="Buscar codigo/titulo da LD">
-          <datalist id="docsLd"></datalist>
-        </div>
-        <div>
-          <label>Tipo de controle</label>
-          <select id="controleTipo">
-            <option>Quantitativo</option>
-            <option>Pedido de material</option>
-            <option>Material</option>
-            <option>Montagem</option>
-            <option>Medicao/report</option>
-            <option>Geral</option>
-          </select>
-        </div>
-        <div>
-          <label>Setor</label>
-          <input id="setor" placeholder="Ex.: Engenharia">
-        </div>
-        <div>
-          <label>Area</label>
-          <input id="area" placeholder="Ex.: Civil / Tubulacao">
-        </div>
-        <button id="btnCriarControle">Vincular controle</button>
+      <h2>Documentos LD sem controle atribuido</h2>
+      <div class="sub">Selecione primeiro o documento novo ou ainda sem controle. Depois escolha o tipo de controle, setor e area que devem acompanhar futuras revisoes.</div>
+      <div class="doc-filters">
+        <select id="filtroDisciplinaControle"><option value="">Todas disciplinas</option></select>
+        <select id="filtroStatusControle"><option value="">Todos status</option></select>
+        <input id="buscaDocControle" placeholder="Buscar codigo/titulo...">
+        <button class="outline" id="btnFiltrarDocsControle">Filtrar</button>
+        <span class="count" id="docsSemControleCount">0 documento(s)</span>
       </div>
-      <div class="checks">
-        <label><input id="temPedido" type="checkbox"> Pedido emitido</label>
-        <label><input id="temMaterial" type="checkbox"> Material solicitado/recebido</label>
-        <label><input id="temMontagem" type="checkbox"> Montagem/execucao registrada</label>
-        <label><input id="temReport" type="checkbox"> Ja entrou em medicao/report</label>
+      <div class="doc-list">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Documento</th><th>Titulo</th><th>Disciplina</th><th>Rev</th><th>Status</th><th>A4</th><th></th></tr>
+            </thead>
+            <tbody id="tbodyDocsSemControle"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="two" style="margin-top:8px">
-        <input id="numeroPedido" placeholder="Numero do pedido, se houver">
-        <input id="statusPedido" placeholder="Status do pedido, se houver">
+
+      <div id="formControleBox" class="hidden" style="margin-top:16px">
+        <div class="form-head">
+          <div>
+            <h2 id="formControleTitulo">Vincular controle</h2>
+            <div class="sub" id="formControleSub">Informe como este documento sera acompanhado.</div>
+          </div>
+          <button class="secondary" id="btnCancelarControle" type="button">Cancelar</button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label>Documento LD</label>
+            <input id="docBusca" readonly>
+          </div>
+          <div>
+            <label>Tipo de controle</label>
+            <select id="controleTipo">
+              <option>Quantitativo</option>
+              <option>Pedido de material</option>
+              <option>Material</option>
+              <option>Montagem</option>
+              <option>Medicao/report</option>
+              <option>Geral</option>
+            </select>
+          </div>
+          <div>
+            <label>Setor</label>
+            <input id="setor" placeholder="Ex.: Engenharia">
+          </div>
+          <div>
+            <label>Area</label>
+            <input id="area" placeholder="Ex.: Civil / Tubulacao">
+          </div>
+          <button id="btnCriarControle">Vincular controle</button>
+        </div>
+        <div class="checks">
+          <label><input id="temPedido" type="checkbox"> Pedido emitido</label>
+          <label><input id="temMaterial" type="checkbox"> Material solicitado/recebido</label>
+          <label><input id="temMontagem" type="checkbox"> Montagem/execucao registrada</label>
+          <label><input id="temReport" type="checkbox"> Ja entrou em medicao/report</label>
+        </div>
+        <div class="two" style="margin-top:8px">
+          <input id="numeroPedido" placeholder="Numero do pedido, se houver">
+          <input id="statusPedido" placeholder="Status do pedido, se houver">
+        </div>
       </div>
       <div class="mini-table">
         <table>
@@ -132,6 +169,7 @@
     let controles = [];
     let docs = [];
     let selecionado = null;
+    let docControleSelecionado = null;
 
     const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -139,8 +177,8 @@
     async function carregarDocs() {
       const res = await fetch(`${API}/ld/documentos`);
       docs = await res.json();
-      const list = document.getElementById('docsLd');
-      list.innerHTML = docs.map(d => `<option value="${esc(d.codigo_documento)}">${esc(d.titulo || '')} | Rev. ${esc(d.revisao || '-')} | ${esc(d.disciplina || '')}</option>`).join('');
+      preencherFiltrosDocs();
+      renderDocsSemControle();
     }
 
     async function carregarControles() {
@@ -160,12 +198,83 @@
           <td>${esc(alertas || '-')}</td>
         </tr>`;
       }).join('') : '<tr><td colspan="8">Nenhum controle vinculado ainda.</td></tr>';
+      renderDocsSemControle();
+    }
+
+    function preencherFiltrosDocs() {
+      const disciplinas = [...new Set(docs.map(d => d.disciplina).filter(Boolean))].sort();
+      const status = [...new Set(docs.map(d => d.status).filter(Boolean))].sort();
+      const disciplinaAtual = document.getElementById('filtroDisciplinaControle').value;
+      const statusAtual = document.getElementById('filtroStatusControle').value;
+      document.getElementById('filtroDisciplinaControle').innerHTML = '<option value="">Todas disciplinas</option>' + disciplinas.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      document.getElementById('filtroStatusControle').innerHTML = '<option value="">Todos status</option>' + status.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      document.getElementById('filtroDisciplinaControle').value = disciplinaAtual;
+      document.getElementById('filtroStatusControle').value = statusAtual;
+    }
+
+    function docsSemControleFiltrados() {
+      const vinculados = new Set(controles.map(c => c.documento_origem));
+      const disciplina = document.getElementById('filtroDisciplinaControle').value;
+      const status = document.getElementById('filtroStatusControle').value;
+      const busca = document.getElementById('buscaDocControle').value.trim().toLowerCase();
+      return docs.filter(d => {
+        if (vinculados.has(d.codigo_documento)) return false;
+        if (disciplina && d.disciplina !== disciplina) return false;
+        if (status && d.status !== status) return false;
+        if (busca) {
+          const texto = `${d.codigo_documento || ''} ${d.titulo || ''}`.toLowerCase();
+          if (!texto.includes(busca)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderDocsSemControle() {
+      const tbody = document.getElementById('tbodyDocsSemControle');
+      if (!tbody) return;
+      const lista = docsSemControleFiltrados();
+      document.getElementById('docsSemControleCount').textContent = `${lista.length} documento(s)`;
+      tbody.innerHTML = lista.length ? lista.map((d, i) => `
+        <tr>
+          <td class="code">${esc(d.codigo_documento)}</td>
+          <td>${esc(d.titulo || '-')}</td>
+          <td>${esc(d.disciplina || '-')}</td>
+          <td>${esc(d.revisao || '-')}</td>
+          <td><span class="pill">${esc(d.status || '-')}</span></td>
+          <td>${esc(d.a4_equivalente ?? d.a4 ?? '-')}</td>
+          <td><button class="outline btn-vincular-doc" data-i="${i}">Vincular a controle</button></td>
+        </tr>`).join('') : '<tr><td colspan="7">Nenhum documento pendente de controle com os filtros atuais.</td></tr>';
+      [...tbody.querySelectorAll('.btn-vincular-doc')].forEach(btn => {
+        btn.onclick = () => selecionarDocControle(lista[Number(btn.dataset.i)]);
+      });
+    }
+
+    function selecionarDocControle(doc) {
+      docControleSelecionado = doc;
+      document.getElementById('docBusca').value = doc.codigo_documento || '';
+      document.getElementById('setor').value = 'Engenharia';
+      document.getElementById('area').value = doc.disciplina || '';
+      document.getElementById('temPedido').checked = false;
+      document.getElementById('temMaterial').checked = false;
+      document.getElementById('temMontagem').checked = false;
+      document.getElementById('temReport').checked = false;
+      document.getElementById('numeroPedido').value = '';
+      document.getElementById('statusPedido').value = '';
+      document.getElementById('formControleTitulo').textContent = `Vincular controle: ${doc.codigo_documento || ''}`;
+      document.getElementById('formControleSub').textContent = `${doc.titulo || 'Documento LD'} | Rev. ${doc.revisao || '-'} | ${doc.disciplina || '-'}`;
+      document.getElementById('formControleBox').classList.remove('hidden');
+      document.getElementById('formControleBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function cancelarControle() {
+      docControleSelecionado = null;
+      document.getElementById('formControleBox').classList.add('hidden');
     }
 
     async function criarControle() {
-      const documento = document.getElementById('docBusca').value.trim();
+      const documento = docControleSelecionado?.codigo_documento || document.getElementById('docBusca').value.trim();
       if (!documento) return alert('Selecione um documento da LD.');
-      const doc = docs.find(d => d.codigo_documento === documento);
+      const doc = docControleSelecionado || docs.find(d => d.codigo_documento === documento);
       const payload = {
         documento_origem: documento,
         revisao_documento: doc?.revisao || null,
@@ -186,6 +295,8 @@
       });
       if (!res.ok) return alert('Erro ao vincular controle: ' + await res.text());
       await carregarControles();
+      cancelarControle();
+      await carregar();
       alert('Controle vinculado ao documento LD.');
     }
 
@@ -287,6 +398,11 @@
 
     document.getElementById('btnAtualizar').onclick = carregar;
     document.getElementById('btnCriarControle').onclick = criarControle;
+    document.getElementById('btnCancelarControle').onclick = cancelarControle;
+    document.getElementById('btnFiltrarDocsControle').onclick = renderDocsSemControle;
+    document.getElementById('filtroDisciplinaControle').onchange = renderDocsSemControle;
+    document.getElementById('filtroStatusControle').onchange = renderDocsSemControle;
+    document.getElementById('buscaDocControle').oninput = renderDocsSemControle;
     Promise.all([carregarDocs(), carregarControles()]).then(carregar).catch(e => {
       document.getElementById('resumo').textContent = 'Erro ao carregar: ' + e.message;
     });
