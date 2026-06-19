@@ -13,6 +13,7 @@
       .module-tabs a[href="/conciliacao-sigem"] { order: 2; }
       .module-tabs a[href="/motor-medicao"] { order: 3; }
       .module-tabs a[href="/analise-revisoes"] { order: 4; }
+      .module-tabs a[href="/analise-revisoes?view=controle"] { order: 5; }
     </style>
   </head>
   <body>
@@ -74,12 +75,20 @@
               if (ref) link.className = ref.className;
             }
             link.href = "/analise-revisoes";
-            link.textContent = "Análise de Revisões";
+            link.textContent = "Novos Documentos";
             link.style.whiteSpace = "nowrap";
-            const ordem = ["/integracao-ld", "/conciliacao-sigem", "/motor-medicao", "/analise-revisoes"];
+            let controleLink = engNav.querySelector('a[href="/analise-revisoes?view=controle"]');
+            if (!controleLink) {
+              controleLink = document.createElement("a");
+              controleLink.className = link.className;
+              controleLink.href = "/analise-revisoes?view=controle";
+            }
+            controleLink.textContent = "Controle";
+            controleLink.style.whiteSpace = "nowrap";
+            const ordem = ["/integracao-ld", "/conciliacao-sigem", "/motor-medicao", "/analise-revisoes", "/analise-revisoes?view=controle"];
             const tabs = new Map([...engNav.querySelectorAll("a")].map(a => [a.getAttribute("href"), a]));
             ordem.forEach(href => {
-              const tab = href === "/analise-revisoes" ? link : tabs.get(href);
+              const tab = href === "/analise-revisoes" ? link : href === "/analise-revisoes?view=controle" ? controleLink : tabs.get(href);
               if (tab) engNav.appendChild(tab);
             });
           }
@@ -89,7 +98,7 @@
           );
           if (sideEng && !sideEng.dataset.revisoesHintReady) {
             sideEng.dataset.revisoesHintReady = "1";
-            sideEng.title = "Engenharia: Documentos, SIGEM, Medição e Análise de Revisões";
+            sideEng.title = "Engenharia: Documentos, SIGEM, Medição, Novos Documentos e Controle";
           }
         }
         function scheduleHide() {

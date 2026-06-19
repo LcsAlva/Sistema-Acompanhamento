@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Analise de Revisoes</title>
+  <title>Novos Documentos</title>
   <style>
     :root { --color-bg: #f8fafc; --color-sidebar: #0f172a; --color-sidebar-hover: #1e293b; --color-primary: #2563eb; --color-border: #e2e8f0; --color-muted: #64748b; --color-text: #0f172a; }
     * { box-sizing: border-box; }
@@ -35,6 +35,7 @@
     .module-tab[href="/conciliacao-sigem"] { order: 2; }
     .module-tab[href="/motor-medicao"] { order: 3; }
     .module-tab[href="/analise-revisoes"] { order: 4; }
+    .module-tab[href="/analise-revisoes?view=controle"] { order: 5; }
     .module-tab:hover { color: var(--color-text); background: #eef2ff; }
     .module-tab.is-active { color: var(--color-primary); background: #dbeafe; }
     main { padding: 16px 24px 24px; max-width: 1440px; margin: 0 auto; }
@@ -99,6 +100,11 @@
     .bulk-count { color: #1e3a8a; font-size: 12px; font-weight: 700; }
     .check-cell { width: 38px; text-align: center; }
     .check-cell input, .group-check { width: 16px; height: 16px; padding: 0; }
+    .controle-type-block { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .controle-type-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; background: #eef6ff; border-bottom: 1px solid #dbeafe; }
+    .controle-type-head strong { color: #0f4c81; font-size: 13px; text-transform: uppercase; }
+    .controle-type-head span { color: #64748b; font-size: 12px; }
+    .controle-type-block table { min-width: 980px; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -158,13 +164,14 @@
         <a class="module-tab" href="/integracao-ld">Documentos</a>
         <a class="module-tab" href="/conciliacao-sigem">Status SIGEM</a>
         <a class="module-tab" href="/motor-medicao">Medicao Engenharia</a>
-        <a class="module-tab is-active" href="/analise-revisoes">Analise de Revisoes</a>
+        <a class="module-tab is-active" id="tabNovosDocumentos" href="/analise-revisoes">Novos Documentos</a>
+        <a class="module-tab" id="tabControle" href="/analise-revisoes?view=controle">Controle</a>
       </nav>
   <main>
-    <h1 class="page-title">Analise de Revisoes</h1>
+    <h1 class="page-title" id="pageTitle">Novos Documentos</h1>
     <div class="sub" id="resumo">Carregando...</div>
 
-    <section class="block">
+    <section class="block" id="novosDocumentosView">
       <div id="formControleBox" class="hidden">
         <div class="form-head">
           <div>
@@ -247,12 +254,25 @@
           </div>
         </div>
       </div>
-      <div class="mini-table">
+      <div class="mini-table hidden">
         <table>
           <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Tipo</th><th>Setor</th><th>Area</th><th>Status</th><th>Alertas</th></tr></thead>
           <tbody id="tbodyControles"></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="block hidden" id="controleView">
+      <h2>Controles definidos</h2>
+      <div class="sub">Controles ja classificados, separados pelo tipo de controle. Depois refinamos aqui os padroes de quantitativo e cadastro.</div>
+      <div class="doc-filters" style="grid-template-columns:minmax(180px,240px) minmax(180px,240px) minmax(220px,1fr) auto auto">
+        <select id="filtroTipoControleLista"><option value="">Todos os tipos</option></select>
+        <select id="filtroAreaControleLista"><option value="">Todas areas</option></select>
+        <input id="buscaControleLista" placeholder="Buscar controle/documento/area...">
+        <button class="outline" id="btnFiltrarControlesLista" type="button">Filtrar</button>
+        <span class="count" id="controlesListaCount">0 controle(s)</span>
+      </div>
+      <div id="controlesAgrupados" class="doc-list"></div>
     </section>
 
     <div class="toolbar">
@@ -301,6 +321,7 @@
     let sourceMode = 'sigem';
     let incluiQuantitativo = true;
     let organizarPorTipo = false;
+    let activeView = 'novos';
     const disciplinasRecolhidas = new Set();
     const tiposRecolhidos = new Set();
     const docsSelecionados = new Set();
@@ -325,9 +346,20 @@
     async function carregarControles() {
       const res = await fetch(`${API}/revisoes/controles`);
       controles = await res.json();
+      renderMiniControles();
+      renderControlesAgrupados();
+      renderDocsSemControle();
+    }
+
+    function alertasControle(c) {
+      return [c.tem_pedido && 'pedido', c.tem_material && 'material', c.tem_montagem && 'montagem', c.entrou_medicao_report && 'report'].filter(Boolean).join(', ');
+    }
+
+    function renderMiniControles() {
       const tbody = document.getElementById('tbodyControles');
+      if (!tbody) return;
       tbody.innerHTML = controles.length ? controles.map(c => {
-        const alertas = [c.tem_pedido && 'pedido', c.tem_material && 'material', c.tem_montagem && 'montagem', c.entrou_medicao_report && 'report'].filter(Boolean).join(', ');
+        const alertas = alertasControle(c);
         return `<tr>
           <td><b>${esc(c.codigo_controle)}</b></td>
           <td>${esc(c.documento_origem)}</td>
@@ -339,7 +371,95 @@
           <td>${esc(alertas || '-')}</td>
         </tr>`;
       }).join('') : '<tr><td colspan="8">Nenhum controle vinculado ainda.</td></tr>';
-      renderDocsSemControle();
+    }
+
+    function preencherFiltrosControles() {
+      const tipoAtual = document.getElementById('filtroTipoControleLista').value;
+      const areaAtual = document.getElementById('filtroAreaControleLista').value;
+      const tipos = [...new Set(controles.map(c => c.controle_aplicavel || 'Sem tipo').filter(Boolean))].sort();
+      const areas = [...new Set(controles.map(c => c.area || 'Sem area').filter(Boolean))].sort();
+      document.getElementById('filtroTipoControleLista').innerHTML = '<option value="">Todos os tipos</option>' + tipos.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      document.getElementById('filtroAreaControleLista').innerHTML = '<option value="">Todas areas</option>' + areas.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      document.getElementById('filtroTipoControleLista').value = tipos.includes(tipoAtual) ? tipoAtual : '';
+      document.getElementById('filtroAreaControleLista').value = areas.includes(areaAtual) ? areaAtual : '';
+    }
+
+    function controlesFiltrados() {
+      const tipo = document.getElementById('filtroTipoControleLista').value;
+      const area = document.getElementById('filtroAreaControleLista').value;
+      const busca = document.getElementById('buscaControleLista').value.trim().toLowerCase();
+      return controles.filter(c => {
+        if (tipo && (c.controle_aplicavel || 'Sem tipo') !== tipo) return false;
+        if (area && (c.area || 'Sem area') !== area) return false;
+        if (busca) {
+          const alvo = `${c.codigo_controle || ''} ${c.documento_origem || ''} ${c.controle_aplicavel || ''} ${c.setor || ''} ${c.area || ''}`.toLowerCase();
+          if (!alvo.includes(busca)) return false;
+        }
+        return true;
+      });
+    }
+
+    function linhaControleDefinido(c) {
+      const alertas = alertasControle(c);
+      return `<tr>
+        <td><b>${esc(c.codigo_controle)}</b></td>
+        <td>${esc(c.documento_origem)}</td>
+        <td>${esc(c.revisao_documento || '-')}</td>
+        <td>${esc(c.setor || '-')}</td>
+        <td>${esc(c.area || '-')}</td>
+        <td>${esc(c.status_controle || '-')}</td>
+        <td>${esc(alertas || '-')}</td>
+      </tr>`;
+    }
+
+    function renderControlesAgrupados() {
+      const container = document.getElementById('controlesAgrupados');
+      if (!container) return;
+      preencherFiltrosControles();
+      const lista = controlesFiltrados();
+      document.getElementById('controlesListaCount').textContent = `${lista.length} controle(s)`;
+      const grupos = lista.reduce((acc, c) => {
+        const key = c.controle_aplicavel || 'Sem tipo';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(c);
+        return acc;
+      }, {});
+      const tipos = Object.keys(grupos).sort();
+      container.innerHTML = tipos.length ? tipos.map(tipo => `
+        <section class="controle-type-block">
+          <div class="controle-type-head">
+            <strong>${esc(tipo)}</strong>
+            <span>${grupos[tipo].length} controle(s)</span>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Setor</th><th>Area</th><th>Status</th><th>Alertas</th></tr></thead>
+              <tbody>${grupos[tipo].map(linhaControleDefinido).join('')}</tbody>
+            </table>
+          </div>
+        </section>
+      `).join('') : '<div style="padding:14px" class="muted">Nenhum controle encontrado.</div>';
+    }
+
+    function aplicarView() {
+      const params = new URLSearchParams(window.location.search);
+      activeView = params.get('view') === 'controle' ? 'controle' : 'novos';
+      document.getElementById('novosDocumentosView').classList.toggle('hidden', activeView !== 'novos');
+      document.getElementById('controleView').classList.toggle('hidden', activeView !== 'controle');
+      document.getElementById('tabNovosDocumentos').classList.toggle('is-active', activeView === 'novos');
+      document.getElementById('tabControle').classList.toggle('is-active', activeView === 'controle');
+      document.getElementById('pageTitle').textContent = activeView === 'controle' ? 'Controle' : 'Novos Documentos';
+      renderControlesAgrupados();
+      atualizarResumoTopo();
+    }
+
+    function atualizarResumoTopo() {
+      if (activeView === 'controle') {
+        const tipos = new Set(controles.map(c => c.controle_aplicavel || 'Sem tipo'));
+        document.getElementById('resumo').textContent = `${controles.length} controle(s) definido(s) · ${tipos.size} tipo(s)`;
+        return;
+      }
+      document.getElementById('resumo').textContent = `${eventos.length} registro(s) de impacto · ${controles.length} controle(s) vinculado(s)`;
     }
 
     function preencherFiltrosDocs() {
@@ -739,7 +859,7 @@
       if (status) params.set('status', status);
       const res = await fetch(`${API}/revisoes/eventos?${params}`);
       eventos = await res.json();
-      document.getElementById('resumo').textContent = `${eventos.length} registro(s) de impacto · ${controles.length} controle(s) vinculado(s)`;
+      atualizarResumoTopo();
       renderTabela();
     }
 
@@ -838,12 +958,20 @@
     document.getElementById('btnSelecionarVisiveis').onclick = selecionarVisiveis;
     document.getElementById('btnLimparSelecao').onclick = limparSelecao;
     document.getElementById('btnClassificarSelecionados').onclick = classificarSelecionados;
+    document.getElementById('btnFiltrarControlesLista').onclick = renderControlesAgrupados;
+    document.getElementById('filtroTipoControleLista').onchange = renderControlesAgrupados;
+    document.getElementById('filtroAreaControleLista').onchange = renderControlesAgrupados;
+    document.getElementById('buscaControleLista').oninput = renderControlesAgrupados;
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
+    window.addEventListener('popstate', aplicarView);
     document.querySelectorAll('#quantToggle button').forEach(btn => {
       btn.onclick = () => setQuantitativo(btn.dataset.quant === 'sim');
     });
-    Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles()]).then(carregar).catch(e => {
+    Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles()]).then(() => {
+      aplicarView();
+      return carregar();
+    }).catch(e => {
       document.getElementById('resumo').textContent = 'Erro ao carregar: ' + e.message;
     });
   </script>
