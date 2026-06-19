@@ -60,14 +60,22 @@
           const engNav = [...document.querySelectorAll("nav")].find(nav =>
             /Navegacao de Engenharia|Navegação de Engenharia/i.test(nav.getAttribute("aria-label") || "")
           );
-          if (engNav && !engNav.querySelector('a[href="/analise-revisoes"]')) {
-            const link = document.createElement("a");
+          if (engNav) {
+            let link = engNav.querySelector('a[href="/analise-revisoes"]');
+            if (!link) {
+              link = document.createElement("a");
+              const ref = engNav.querySelector("a");
+              if (ref) link.className = ref.className;
+            }
             link.href = "/analise-revisoes";
             link.textContent = "Análise de Revisões";
-            const ref = engNav.querySelector("a");
-            if (ref) link.className = ref.className;
             link.style.whiteSpace = "nowrap";
-            engNav.appendChild(link);
+            const ordem = ["/integracao-ld", "/conciliacao-sigem", "/motor-medicao", "/analise-revisoes"];
+            const tabs = new Map([...engNav.querySelectorAll("a")].map(a => [a.getAttribute("href"), a]));
+            ordem.forEach(href => {
+              const tab = href === "/analise-revisoes" ? link : tabs.get(href);
+              if (tab) engNav.appendChild(tab);
+            });
           }
 
           const sideEng = [...document.querySelectorAll('.app-sidebar-nav a')].find(a =>
