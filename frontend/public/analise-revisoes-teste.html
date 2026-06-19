@@ -111,6 +111,15 @@
     .standard-card p { margin: 0; color: #475569; font-size: 12px; line-height: 1.45; }
     .standard-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .standard-tags span { padding: 4px 8px; border-radius: 999px; background: white; border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 11px; font-weight: 700; }
+    .quant-preview { margin-top: 14px; border: 1px solid #dbeafe; border-radius: 8px; overflow: hidden; background: white; }
+    .quant-preview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 14px; background: #f8fbff; border-bottom: 1px solid #dbeafe; }
+    .quant-preview-head h3 { margin: 0; font-size: 15px; color: #0f172a; }
+    .quant-preview-head p { margin: 4px 0 0; color: #64748b; font-size: 12px; }
+    .quant-kpis { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 8px; padding: 12px 14px; border-bottom: 1px solid #eef2ff; }
+    .quant-kpi { padding: 10px; border: 1px solid #e5e7eb; border-radius: 7px; background: #fff; }
+    .quant-kpi strong { display: block; color: #0f172a; font-size: 16px; }
+    .quant-kpi span { color: #64748b; font-size: 11px; }
+    .quant-preview table { min-width: 920px; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -283,6 +292,36 @@
           <strong>Tubulacao - Suportes</strong>
           <p>Controle para lista de suportes, tags de apoio, grampos, bases, guias, quantidades e vinculo com linhas.</p>
           <div class="standard-tags"><span>LI-293</span><span>PS</span><span>BA</span><span>GI</span><span>GR</span></div>
+        </div>
+      </div>
+      <div class="quant-preview">
+        <div class="quant-preview-head">
+          <div>
+            <h3>Exemplo preenchido: IS-5275.00-2221-200-E6G-001</h3>
+            <p>Tubulacao - Tubos e conexoes | Linha 6&quot;-GQ-0570-1700-Bc-IQ | Rev. 0 | dados extraidos do PDF recebido.</p>
+          </div>
+          <span class="pill">Modelo de visualizacao</span>
+        </div>
+        <div class="quant-kpis">
+          <div class="quant-kpi"><strong>2</strong><span>itens de tubo</span></div>
+          <div class="quant-kpi"><strong>7</strong><span>spools identificados</span></div>
+          <div class="quant-kpi"><strong>22,40 m</strong><span>tubo 6&quot; SCH 40</span></div>
+          <div class="quant-kpi"><strong>630,86 kg</strong><span>peso tubo 6&quot;</span></div>
+        </div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Item controlavel</th><th>Tipo</th><th>DN</th><th>Qtd/Metro</th><th>Peso</th><th>Referencia</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>6&quot;-GQ-0570-1700-Bc-IQ</b></td><td>Tubo PC SC/CC SCH 40 AC API 5L B PSL1</td><td>6&quot;</td><td>22,40 m</td><td>630,86 kg</td><td>PT 1 / IS-001</td><td><span class="pill">Aberto</span></td></tr>
+              <tr><td><b>6&quot;-GQ-0570-1703-Bc-IQ</b></td><td>Continuidade de linha</td><td>6&quot;</td><td>A confirmar</td><td>-</td><td>Continua no desenho</td><td><span class="pill">A validar</span></td></tr>
+              <tr><td><b>SPL01</b></td><td>Spool</td><td>6&quot;</td><td>2 cortes</td><td>107,81 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Aberto</span></td></tr>
+              <tr><td><b>SPL02</b></td><td>Spool</td><td>6&quot;</td><td>1 corte</td><td>74,04 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Aberto</span></td></tr>
+              <tr><td><b>SPL03</b></td><td>Spool</td><td>6&quot;</td><td>1 corte</td><td>179,40 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Aberto</span></td></tr>
+              <tr><td><b>PS-0570-026 / PS-0570-033</b></td><td>Suportes associados</td><td>-</td><td>2 un</td><td>-</td><td>Detectado no isometrico</td><td><span class="pill">Enviar para suportes</span></td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
       <div class="doc-filters" style="grid-template-columns:minmax(180px,240px) minmax(180px,240px) minmax(220px,1fr) auto auto">
