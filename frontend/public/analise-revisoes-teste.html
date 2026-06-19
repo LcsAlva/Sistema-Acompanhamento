@@ -91,6 +91,9 @@
     .discipline-block.is-collapsed .collapse-btn { transform: rotate(-90deg); }
     .type-row { background: #eef6ff; }
     .type-row td { color: #0f4c81; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .type-row.is-collapsed .collapse-btn { transform: rotate(-90deg); }
+    .type-title { display: inline-flex; align-items: center; gap: 8px; }
+    .type-child.is-hidden { display: none; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -285,6 +288,7 @@
     let incluiQuantitativo = true;
     let organizarPorTipo = false;
     const disciplinasRecolhidas = new Set();
+    const tiposRecolhidos = new Set();
 
     const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -427,6 +431,7 @@
         </section>
       `).join('') : '<div style="padding:12px">Nenhum documento SIGEM emitido/postado pendente de classificacao com os filtros atuais.</div>';
       conectarBotoesAgrupamento();
+      conectarBotoesTipo();
       conectarBotoesClassificacao(lista);
     }
 
@@ -443,18 +448,41 @@
         acc[key].push(doc);
         return acc;
       }, {});
-      return Object.keys(gruposTipo).sort().map(tipo => `
-        <tr class="type-row"><td colspan="6">${esc(tipo)} - ${gruposTipo[tipo].length} documento(s)</td></tr>
-        ${gruposTipo[tipo].map(d => linhaDocumentoClassificacao(d, lista)).join('')}
-      `).join('');
+      return Object.keys(gruposTipo).sort().map(tipo => {
+        const key = `${docsGrupo[0]?.disciplina || 'Sem disciplina'}||${tipo}`;
+        const recolhido = tiposRecolhidos.has(key);
+        return `
+        <tr class="type-row ${recolhido ? 'is-collapsed' : ''}">
+          <td colspan="6">
+            <span class="type-title">
+              <button class="collapse-btn type-collapse-btn" type="button" data-type-key="${esc(key)}" title="Agrupar/recolher tipo">v</button>
+              ${esc(tipo)} - ${gruposTipo[tipo].length} documento(s)
+            </span>
+          </td>
+        </tr>
+        ${gruposTipo[tipo].map(d => linhaDocumentoClassificacao(d, lista, `type-child ${recolhido ? 'is-hidden' : ''}`)).join('')}
+      `;
+      }).join('');
     }
 
     function conectarBotoesAgrupamento() {
       [...document.querySelectorAll('.collapse-btn')].forEach(btn => {
+        if (btn.classList.contains('type-collapse-btn')) return;
         btn.onclick = () => {
           const disc = btn.dataset.disc;
           if (disciplinasRecolhidas.has(disc)) disciplinasRecolhidas.delete(disc);
           else disciplinasRecolhidas.add(disc);
+          renderDocsSemControle();
+        };
+      });
+    }
+
+    function conectarBotoesTipo() {
+      [...document.querySelectorAll('.type-collapse-btn')].forEach(btn => {
+        btn.onclick = () => {
+          const key = btn.dataset.typeKey;
+          if (tiposRecolhidos.has(key)) tiposRecolhidos.delete(key);
+          else tiposRecolhidos.add(key);
           renderDocsSemControle();
         };
       });
@@ -482,9 +510,9 @@
       conectarBotoesClassificacao(lista);
     }
 
-    function linhaDocumentoClassificacao(d, lista) {
+    function linhaDocumentoClassificacao(d, lista, extraClass = '') {
       const idx = lista.indexOf(d);
-      return `<tr>
+      return `<tr class="${esc(extraClass)}">
         <td class="code">${esc(d.codigo_documento)}</td>
         <td>${esc(d.titulo || '-')}</td>
         <td>${esc(d.revisao || '-')}</td>
