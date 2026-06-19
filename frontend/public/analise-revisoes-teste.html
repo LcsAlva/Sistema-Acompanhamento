@@ -336,12 +336,16 @@
       return s !== 'EM ELABORACAO';
     }
 
+    function ehDocumentacaoTecnicaSigem(doc) {
+      return normalizarTexto(doc.nivel_1) === 'DOCUMENTACAO TECNICA';
+    }
+
     function enriquecerSigem(doc, mapaLd = ldPorCodigo()) {
       const ld = mapaLd.get(doc.codigo_documento) || {};
       return {
         ...doc,
         titulo: ld.titulo || doc.nivel_4 || doc.nivel_5 || '-',
-        disciplina: ld.disciplina || doc.nivel_2 || doc.nivel_3 || 'Sem disciplina',
+        disciplina: ld.disciplina || doc.nivel_4 || doc.nivel_3 || 'Sem disciplina',
         a4_equivalente: ld.a4_equivalente ?? ld.a4 ?? null,
         origem_classificacao: 'SIGEM'
       };
@@ -350,6 +354,7 @@
     function documentosSigemClassificaveis() {
       const mapaLd = ldPorCodigo();
       return sigemDocs
+        .filter(ehDocumentacaoTecnicaSigem)
         .filter(d => statusEmitidoPostado(d.status))
         .map(d => enriquecerSigem(d, mapaLd));
     }
