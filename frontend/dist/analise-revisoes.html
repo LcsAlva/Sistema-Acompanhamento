@@ -94,6 +94,11 @@
     .type-row.is-collapsed .collapse-btn { transform: rotate(-90deg); }
     .type-title { display: inline-flex; align-items: center; gap: 8px; }
     .type-child.is-hidden { display: none; }
+    .bulk-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 12px 0; padding: 10px 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #eff6ff; }
+    .bulk-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .bulk-count { color: #1e3a8a; font-size: 12px; font-weight: 700; }
+    .check-cell { width: 38px; text-align: center; }
+    .check-cell input, .group-check { width: 16px; height: 16px; padding: 0; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -216,6 +221,14 @@
         <button class="secondary" id="btnOrganizarTipo" type="button">Organizar por tipo</button>
         <span class="count" id="docsSemControleCount">0 documento(s)</span>
       </div>
+      <div class="bulk-bar">
+        <span class="bulk-count" id="bulkCount">0 documento(s) selecionado(s)</span>
+        <div class="bulk-actions">
+          <button class="outline" id="btnSelecionarVisiveis" type="button">Selecionar visiveis</button>
+          <button class="secondary" id="btnLimparSelecao" type="button">Limpar selecao</button>
+          <button id="btnClassificarSelecionados" type="button">Classificar selecionados</button>
+        </div>
+      </div>
       <div id="sigemClassificacaoLista" class="doc-list">
         <div class="scroll">
           <div id="disciplinasDocsSemControle"></div>
@@ -227,7 +240,7 @@
           <div class="scroll">
             <table>
               <thead>
-                <tr><th>Documento</th><th>Titulo</th><th>Disciplina</th><th>Rev</th><th>Status LD</th><th>A4</th><th></th></tr>
+                <tr><th class="check-cell"></th><th>Documento</th><th>Titulo</th><th>Disciplina</th><th>Rev</th><th>Status LD</th><th>A4</th><th></th></tr>
               </thead>
               <tbody id="tbodyLdManual"></tbody>
             </table>
@@ -284,11 +297,13 @@
     let sigemDocs = [];
     let selecionado = null;
     let docControleSelecionado = null;
+    let docsControleSelecionados = [];
     let sourceMode = 'sigem';
     let incluiQuantitativo = true;
     let organizarPorTipo = false;
     const disciplinasRecolhidas = new Set();
     const tiposRecolhidos = new Set();
+    const docsSelecionados = new Set();
 
     const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -422,17 +437,19 @@
               <button class="collapse-btn" type="button" data-disc="${esc(disc)}" title="Agrupar/recolher disciplina">v</button>
               <strong>${esc(disc)}</strong>
             </div>
-            <span>${grupos[disc].length} documento(s)</span>
+            <span><label style="display:inline-flex;align-items:center;gap:6px;margin:0;text-transform:none;color:#64748b;font-size:12px"><input class="group-check disc-check" type="checkbox" data-disc="${esc(disc)}"> ${grupos[disc].length} documento(s)</label></span>
           </div>
           <table>
-            <thead><tr><th>Documento</th><th>Titulo</th><th>Rev</th><th>Status SIGEM</th><th>A4</th><th></th></tr></thead>
+            <thead><tr><th class="check-cell"></th><th>Documento</th><th>Titulo</th><th>Rev</th><th>Status SIGEM</th><th>A4</th><th></th></tr></thead>
             <tbody>${linhasGrupoDisciplina(grupos[disc], lista)}</tbody>
           </table>
         </section>
       `).join('') : '<div style="padding:12px">Nenhum documento SIGEM emitido/postado pendente de classificacao com os filtros atuais.</div>';
       conectarBotoesAgrupamento();
       conectarBotoesTipo();
+      conectarSelecaoEmMassa(lista);
       conectarBotoesClassificacao(lista);
+      atualizarResumoSelecao();
     }
 
     function tipoDocumento(codigo) {
@@ -453,10 +470,13 @@
         const recolhido = tiposRecolhidos.has(key);
         return `
         <tr class="type-row ${recolhido ? 'is-collapsed' : ''}">
-          <td colspan="6">
+          <td colspan="7">
             <span class="type-title">
               <button class="collapse-btn type-collapse-btn" type="button" data-type-key="${esc(key)}" title="Agrupar/recolher tipo">v</button>
-              ${esc(tipo)} - ${gruposTipo[tipo].length} documento(s)
+              <label style="display:inline-flex;align-items:center;gap:6px;margin:0;text-transform:none;color:#0f4c81;font-size:11px">
+                <input class="group-check type-check" type="checkbox" data-type-key="${esc(key)}">
+                ${esc(tipo)} - ${gruposTipo[tipo].length} documento(s)
+              </label>
             </span>
           </td>
         </tr>
@@ -499,6 +519,7 @@
       const tbody = document.getElementById('tbodyLdManual');
       tbody.innerHTML = lista.length ? lista.map((d, i) => `
         <tr>
+          <td class="check-cell"><input class="doc-check" type="checkbox" data-codigo="${esc(d.codigo_documento)}" ${docsSelecionados.has(d.codigo_documento) ? 'checked' : ''}></td>
           <td class="code">${esc(d.codigo_documento)}</td>
           <td>${esc(d.titulo || '-')}</td>
           <td>${esc(d.disciplina || '-')}</td>
@@ -506,13 +527,16 @@
           <td><span class="pill">${esc(d.status || '-')}</span></td>
           <td>${esc(d.a4_equivalente ?? d.a4 ?? '-')}</td>
           <td><button class="outline btn-vincular-doc" data-i="${i}">Classificar</button></td>
-        </tr>`).join('') : '<tr><td colspan="7">Nenhum documento da LD com os filtros atuais.</td></tr>';
+        </tr>`).join('') : '<tr><td colspan="8">Nenhum documento da LD com os filtros atuais.</td></tr>';
       conectarBotoesClassificacao(lista);
+      conectarSelecaoEmMassa(lista);
+      atualizarResumoSelecao();
     }
 
     function linhaDocumentoClassificacao(d, lista, extraClass = '') {
       const idx = lista.indexOf(d);
       return `<tr class="${esc(extraClass)}">
+        <td class="check-cell"><input class="doc-check" type="checkbox" data-codigo="${esc(d.codigo_documento)}" ${docsSelecionados.has(d.codigo_documento) ? 'checked' : ''}></td>
         <td class="code">${esc(d.codigo_documento)}</td>
         <td>${esc(d.titulo || '-')}</td>
         <td>${esc(d.revisao || '-')}</td>
@@ -528,7 +552,89 @@
       });
     }
 
+    function docsVisiveis() {
+      return docsSemControleFiltrados();
+    }
+
+    function atualizarResumoSelecao() {
+      document.getElementById('bulkCount').textContent = `${docsSelecionados.size} documento(s) selecionado(s)`;
+      document.querySelectorAll('.doc-check').forEach(input => {
+        input.checked = docsSelecionados.has(input.dataset.codigo);
+      });
+      document.querySelectorAll('.disc-check').forEach(input => {
+        const docsDisc = docsVisiveis().filter(d => (d.disciplina || 'Sem disciplina') === input.dataset.disc);
+        input.checked = docsDisc.length > 0 && docsDisc.every(d => docsSelecionados.has(d.codigo_documento));
+        input.indeterminate = docsDisc.some(d => docsSelecionados.has(d.codigo_documento)) && !input.checked;
+      });
+      document.querySelectorAll('.type-check').forEach(input => {
+        const [disc, tipo] = input.dataset.typeKey.split('||');
+        const docsTipo = docsVisiveis().filter(d => (d.disciplina || 'Sem disciplina') === disc && tipoDocumento(d.codigo_documento) === tipo);
+        input.checked = docsTipo.length > 0 && docsTipo.every(d => docsSelecionados.has(d.codigo_documento));
+        input.indeterminate = docsTipo.some(d => docsSelecionados.has(d.codigo_documento)) && !input.checked;
+      });
+    }
+
+    function conectarSelecaoEmMassa(lista) {
+      document.querySelectorAll('.doc-check').forEach(input => {
+        input.onchange = () => {
+          if (input.checked) docsSelecionados.add(input.dataset.codigo);
+          else docsSelecionados.delete(input.dataset.codigo);
+          atualizarResumoSelecao();
+        };
+      });
+      document.querySelectorAll('.disc-check').forEach(input => {
+        input.onchange = () => {
+          docsVisiveis()
+            .filter(d => (d.disciplina || 'Sem disciplina') === input.dataset.disc)
+            .forEach(d => input.checked ? docsSelecionados.add(d.codigo_documento) : docsSelecionados.delete(d.codigo_documento));
+          atualizarResumoSelecao();
+        };
+      });
+      document.querySelectorAll('.type-check').forEach(input => {
+        input.onchange = () => {
+          const [disc, tipo] = input.dataset.typeKey.split('||');
+          docsVisiveis()
+            .filter(d => (d.disciplina || 'Sem disciplina') === disc && tipoDocumento(d.codigo_documento) === tipo)
+            .forEach(d => input.checked ? docsSelecionados.add(d.codigo_documento) : docsSelecionados.delete(d.codigo_documento));
+          atualizarResumoSelecao();
+        };
+      });
+    }
+
+    function selecionarVisiveis() {
+      docsVisiveis().forEach(d => docsSelecionados.add(d.codigo_documento));
+      atualizarResumoSelecao();
+    }
+
+    function limparSelecao() {
+      docsSelecionados.clear();
+      docsControleSelecionados = [];
+      atualizarResumoSelecao();
+    }
+
+    function classificarSelecionados() {
+      docsControleSelecionados = docsVisiveis().filter(d => docsSelecionados.has(d.codigo_documento));
+      if (!docsControleSelecionados.length) return alert('Selecione ao menos um documento visivel.');
+      docControleSelecionado = null;
+      const disciplinas = [...new Set(docsControleSelecionados.map(d => d.disciplina).filter(Boolean))];
+      document.getElementById('docBusca').value = `${docsControleSelecionados.length} documentos selecionados`;
+      document.getElementById('setor').value = 'Engenharia';
+      document.getElementById('area').value = disciplinas.length === 1 ? disciplinas[0] : '';
+      setQuantitativo(true);
+      document.getElementById('temPedido').checked = false;
+      document.getElementById('temMaterial').checked = false;
+      document.getElementById('temMontagem').checked = false;
+      document.getElementById('temReport').checked = false;
+      document.getElementById('numeroPedido').value = '';
+      document.getElementById('statusPedido').value = '';
+      document.getElementById('formControleTitulo').textContent = `Classificar ${docsControleSelecionados.length} documentos`;
+      document.getElementById('formControleSub').textContent = disciplinas.length === 1 ? `${disciplinas[0]} | classificacao em lote` : 'Multiplas disciplinas | confirme area ou deixe em branco para usar a disciplina de cada documento';
+      document.getElementById('formControleBox').classList.remove('hidden');
+      document.getElementById('formControleBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function selecionarDocControle(doc) {
+      docsControleSelecionados = [];
       docControleSelecionado = doc;
       document.getElementById('docBusca').value = doc.codigo_documento || '';
       document.getElementById('setor').value = 'Engenharia';
@@ -564,15 +670,13 @@
 
     function cancelarControle() {
       docControleSelecionado = null;
+      docsControleSelecionados = [];
       document.getElementById('formControleBox').classList.add('hidden');
     }
 
-    async function criarControle() {
-      const documento = docControleSelecionado?.codigo_documento || document.getElementById('docBusca').value.trim();
-      if (!documento) return alert('Selecione um documento da LD.');
-      const doc = docControleSelecionado || docs.find(d => d.codigo_documento === documento);
+    function payloadControle(doc) {
       const payload = {
-        documento_origem: documento,
+        documento_origem: doc.codigo_documento,
         revisao_documento: doc?.revisao || null,
         controle_aplicavel: incluiQuantitativo ? 'Quantitativo' : 'Sem quantitativo',
         setor: document.getElementById('setor').value,
@@ -584,12 +688,43 @@
         tem_montagem: document.getElementById('temMontagem').checked,
         entrou_medicao_report: document.getElementById('temReport').checked
       };
+      return payload;
+    }
+
+    async function enviarControle(doc) {
       const res = await fetch(`${API}/revisoes/controles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payloadControle(doc))
       });
-      if (!res.ok) return alert('Erro ao vincular controle: ' + await res.text());
+      if (!res.ok) throw new Error(await res.text());
+    }
+
+    async function criarControle() {
+      const lote = docsControleSelecionados.length ? docsControleSelecionados : [];
+      if (lote.length) {
+        try {
+          for (const doc of lote) await enviarControle(doc);
+        } catch (e) {
+          return alert('Erro ao classificar lote: ' + e.message);
+        }
+        lote.forEach(d => docsSelecionados.delete(d.codigo_documento));
+        await carregarControles();
+        cancelarControle();
+        await carregar();
+        alert(`${lote.length} documento(s) classificados.`);
+        return;
+      }
+
+      const documento = docControleSelecionado?.codigo_documento || document.getElementById('docBusca').value.trim();
+      if (!documento) return alert('Selecione um documento.');
+      const doc = docControleSelecionado || docs.find(d => d.codigo_documento === documento);
+      if (!doc) return alert('Documento nao encontrado na lista atual.');
+      try {
+        await enviarControle(doc);
+      } catch (e) {
+        return alert('Erro ao vincular controle: ' + e.message);
+      }
       await carregarControles();
       cancelarControle();
       await carregar();
@@ -700,6 +835,9 @@
     document.getElementById('filtroStatusControle').onchange = renderDocsSemControle;
     document.getElementById('buscaDocControle').oninput = renderDocsSemControle;
     document.getElementById('btnOrganizarTipo').onclick = alternarOrganizacaoTipo;
+    document.getElementById('btnSelecionarVisiveis').onclick = selecionarVisiveis;
+    document.getElementById('btnLimparSelecao').onclick = limparSelecao;
+    document.getElementById('btnClassificarSelecionados').onclick = classificarSelecionados;
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
     document.querySelectorAll('#quantToggle button').forEach(btn => {
