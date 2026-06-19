@@ -5,9 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Analise de Revisoes</title>
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #f6f7f9; color: #111827; }
-    main { padding: 24px; max-width: 1440px; margin: 0 auto; }
-    h1 { margin: 0; font-size: 22px; }
+    :root { --color-bg: #f6f7f9; --color-sidebar: #0f172a; --color-sidebar-hover: #1e293b; --color-primary: #2563eb; --color-border: #e5e7eb; --color-muted: #64748b; --color-text: #111827; }
+    body { margin: 0; font-family: Arial, sans-serif; background: var(--color-bg); color: var(--color-text); }
+    .app-shell { display: flex; min-height: 100vh; background: var(--color-bg); }
+    .app-sidebar { width: 248px; min-width: 248px; height: 100vh; display: flex; flex-direction: column; background: var(--color-sidebar); color: #e5e7eb; position: sticky; top: 0; }
+    .app-brand { display: flex; gap: 12px; align-items: center; padding: 20px 18px; text-decoration: none; border-bottom: 1px solid rgba(226, 232, 240, 0.1); }
+    .app-brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; background: var(--color-primary); color: white; font-size: 12px; font-weight: 800; }
+    .app-brand-title { color: #fff; font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .app-brand-subtitle { margin-top: 3px; color: #94a3b8; font-size: 11px; }
+    .app-sidebar-nav { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 14px 10px; }
+    .app-sidebar-link { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 10px 12px; color: #cbd5e1; text-decoration: none; border-radius: 7px; font-size: 13px; font-weight: 500; }
+    .app-sidebar-link:hover, .app-sidebar-link.is-active { background: var(--color-sidebar-hover); color: #fff; }
+    .app-sidebar-link.is-active { box-shadow: inset 3px 0 0 var(--color-primary); }
+    .app-sidebar-icon { width: 18px; text-align: center; font-size: 14px; color: #93c5fd; }
+    .app-sidebar-footer { display: flex; flex-direction: column; gap: 2px; padding: 14px 18px 18px; border-top: 1px solid rgba(226, 232, 240, 0.1); color: #94a3b8; font-size: 11px; }
+    .app-sidebar-footer strong { color: #e2e8f0; font-size: 12px; font-weight: 600; }
+    .app-main { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; background: var(--color-bg); }
+    .app-header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 68px; padding: 18px 28px 14px; background: rgba(248, 250, 252, 0.96); border-bottom: 1px solid var(--color-border); }
+    .app-header-kicker { color: var(--color-primary); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .app-header h1 { margin: 2px 0 0; color: var(--color-text); font-size: 22px; font-weight: 700; letter-spacing: 0; }
+    .app-header p { margin: 3px 0 0; color: var(--color-muted); font-size: 12px; }
+    .app-header-meta { display: flex; flex-direction: column; align-items: flex-end; color: var(--color-muted); font-size: 11px; }
+    .app-header-meta span { color: var(--color-primary); font-weight: 700; }
+    .app-header-meta strong { margin-top: 3px; color: var(--color-text); font-size: 12px; font-weight: 600; }
+    .module-tabs { position: sticky; top: 101px; z-index: 19; display: flex; gap: 4px; overflow-x: auto; padding: 10px 28px; background: rgba(248, 250, 252, 0.96); border-bottom: 1px solid var(--color-border); }
+    .module-tab { display: inline-flex; align-items: center; min-height: 34px; padding: 7px 12px; border-radius: 7px; color: var(--color-muted); text-decoration: none; white-space: nowrap; font-size: 13px; font-weight: 600; }
+    .module-tab:hover { color: var(--color-text); background: #eef2ff; }
+    .module-tab.is-active { color: var(--color-primary); background: #dbeafe; }
+    main { padding: 16px 24px 24px; max-width: 1440px; margin: 0 auto; }
+    .page-title { margin: 0; font-size: 22px; }
     h2 { margin: 0 0 10px; font-size: 15px; color: #111827; }
     .sub { margin-top: 4px; color: #6b7280; font-size: 13px; }
     .toolbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -47,38 +73,68 @@
     .pill { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 10px; border-radius: 999px; background: #f3f4f6; color: #111827; font-size: 11px; font-weight: 700; }
     .count { color: #64748b; font-size: 12px; white-space: nowrap; }
     .form-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 6px; }
+    #formControleBox { scroll-margin-top: 170px; }
     @media (max-width: 980px) {
+      .app-shell { flex-direction: column; }
+      .app-sidebar { width: 100%; min-width: 0; height: auto; position: static; }
+      .app-sidebar-nav { flex-direction: row; overflow-x: auto; }
+      .app-sidebar-link { white-space: nowrap; }
+      .app-header, .module-tabs { position: static; }
       .layout, .form-grid, .doc-filters { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <div class="app-shell">
+    <aside class="app-sidebar">
+      <a href="/" class="app-brand" aria-label="ETM Suite">
+        <div class="app-brand-mark">ETM</div>
+        <div>
+          <div class="app-brand-title">ETM Suite</div>
+          <div class="app-brand-subtitle">Planejamento e Medicao</div>
+        </div>
+      </a>
+      <nav class="app-sidebar-nav" aria-label="Modulos principais">
+        <a class="app-sidebar-link" href="/"><span class="app-sidebar-icon">DE</span><span>Dashboard Executivo</span></a>
+        <a class="app-sidebar-link" href="/dashboard"><span class="app-sidebar-icon">PS</span><span>Programacao Semanal</span></a>
+        <a class="app-sidebar-link is-active" href="/integracao-ld"><span class="app-sidebar-icon">EN</span><span>Engenharia</span></a>
+        <a class="app-sidebar-link" href="/producao"><span class="app-sidebar-icon">PR</span><span>Producao</span></a>
+        <a class="app-sidebar-link" href="/suportes"><span class="app-sidebar-icon">CS</span><span>Catalogo de Suportes</span></a>
+        <a class="app-sidebar-link" href="/financeiro"><span class="app-sidebar-icon">ME</span><span>Medicao</span></a>
+        <a class="app-sidebar-link" href="/gestao-economica/dashboard"><span class="app-sidebar-icon">GE</span><span>Gestao Economica</span></a>
+        <a class="app-sidebar-link" href="/gestao-integrada/auditoria"><span class="app-sidebar-icon">GI</span><span>Gestao Integrada</span></a>
+        <a class="app-sidebar-link" href="/relatorios"><span class="app-sidebar-icon">RE</span><span>Relatorios</span></a>
+        <a class="app-sidebar-link" href="/criterios"><span class="app-sidebar-icon">AD</span><span>Administracao</span></a>
+      </nav>
+      <div class="app-sidebar-footer">
+        <span>RECAP EPC</span>
+        <strong>Revamp Caldeira CO</strong>
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="app-header">
+        <div>
+          <div class="app-header-kicker">ETM Suite</div>
+          <h1>Engenharia</h1>
+          <p>RECAP EPC - Revamp Caldeira CO</p>
+        </div>
+        <div class="app-header-meta">
+          <span>S_043</span>
+          <strong>31/05/2026 a 07/06/2026</strong>
+        </div>
+      </header>
+      <nav class="module-tabs" aria-label="Navegacao de Engenharia">
+        <a class="module-tab" href="/integracao-ld">Documentos</a>
+        <a class="module-tab" href="/conciliacao-sigem">Status SIGEM</a>
+        <a class="module-tab" href="/motor-medicao">Medicao Engenharia</a>
+        <a class="module-tab is-active" href="/analise-revisoes">Analise de Revisoes</a>
+      </nav>
   <main>
-    <h1>Analise de Revisoes</h1>
+    <h1 class="page-title">Analise de Revisoes</h1>
     <div class="sub" id="resumo">Carregando...</div>
 
     <section class="block">
-      <h2>Documentos LD sem controle atribuido</h2>
-      <div class="sub">Selecione primeiro o documento novo ou ainda sem controle. Depois escolha o tipo de controle, setor e area que devem acompanhar futuras revisoes.</div>
-      <div class="doc-filters">
-        <select id="filtroDisciplinaControle"><option value="">Todas disciplinas</option></select>
-        <select id="filtroStatusControle"><option value="">Todos status</option></select>
-        <input id="buscaDocControle" placeholder="Buscar codigo/titulo...">
-        <button class="outline" id="btnFiltrarDocsControle">Filtrar</button>
-        <span class="count" id="docsSemControleCount">0 documento(s)</span>
-      </div>
-      <div class="doc-list">
-        <div class="scroll">
-          <table>
-            <thead>
-              <tr><th>Documento</th><th>Titulo</th><th>Disciplina</th><th>Rev</th><th>Status</th><th>A4</th><th></th></tr>
-            </thead>
-            <tbody id="tbodyDocsSemControle"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="formControleBox" class="hidden" style="margin-top:16px">
+      <div id="formControleBox" class="hidden">
         <div class="form-head">
           <div>
             <h2 id="formControleTitulo">Vincular controle</h2>
@@ -123,6 +179,26 @@
           <input id="statusPedido" placeholder="Status do pedido, se houver">
         </div>
       </div>
+
+      <h2 style="margin-top:16px">Documentos LD sem controle atribuido</h2>
+      <div class="sub">Selecione primeiro o documento novo ou ainda sem controle. Depois escolha o tipo de controle, setor e area que devem acompanhar futuras revisoes.</div>
+      <div class="doc-filters">
+        <select id="filtroDisciplinaControle"><option value="">Todas disciplinas</option></select>
+        <select id="filtroStatusControle"><option value="">Todos status</option></select>
+        <input id="buscaDocControle" placeholder="Buscar codigo/titulo...">
+        <button class="outline" id="btnFiltrarDocsControle">Filtrar</button>
+        <span class="count" id="docsSemControleCount">0 documento(s)</span>
+      </div>
+      <div class="doc-list">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Documento</th><th>Titulo</th><th>Disciplina</th><th>Rev</th><th>Status</th><th>A4</th><th></th></tr>
+            </thead>
+            <tbody id="tbodyDocsSemControle"></tbody>
+          </table>
+        </div>
+      </div>
       <div class="mini-table">
         <table>
           <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Tipo</th><th>Setor</th><th>Area</th><th>Status</th><th>Alertas</th></tr></thead>
@@ -163,6 +239,8 @@
       <aside id="aside"><div class="muted">Selecione um evento para registrar a analise.</div></aside>
     </div>
   </main>
+    </div>
+  </div>
   <script>
     const API = '/api';
     let eventos = [];
@@ -263,7 +341,7 @@
       document.getElementById('formControleTitulo').textContent = `Vincular controle: ${doc.codigo_documento || ''}`;
       document.getElementById('formControleSub').textContent = `${doc.titulo || 'Documento LD'} | Rev. ${doc.revisao || '-'} | ${doc.disciplina || '-'}`;
       document.getElementById('formControleBox').classList.remove('hidden');
-      document.getElementById('formControleBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('formControleBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function cancelarControle() {
