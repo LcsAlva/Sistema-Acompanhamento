@@ -105,6 +105,12 @@
     .controle-type-head strong { color: #0f4c81; font-size: 13px; text-transform: uppercase; }
     .controle-type-head span { color: #64748b; font-size: 12px; }
     .controle-type-block table { min-width: 980px; }
+    .standard-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+    .standard-card { border: 1px solid #dbeafe; border-radius: 8px; padding: 12px; background: #f8fbff; }
+    .standard-card strong { display: block; color: #0f172a; font-size: 13px; margin-bottom: 6px; }
+    .standard-card p { margin: 0; color: #475569; font-size: 12px; line-height: 1.45; }
+    .standard-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .standard-tags span { padding: 4px 8px; border-radius: 999px; background: white; border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 11px; font-weight: 700; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -186,11 +192,13 @@
             <input id="docBusca" readonly>
           </div>
           <div>
-            <label>Inclui quantitativo?</label>
-            <div class="quant-toggle" id="quantToggle">
-              <button type="button" class="is-active" data-quant="sim">Sim</button>
-              <button type="button" data-quant="nao">Nao</button>
-            </div>
+            <label>Tipo de controle</label>
+            <select id="tipoControle">
+              <option>Tubulacao - Tubos e conexoes</option>
+              <option>Tubulacao - Suportes</option>
+              <option>Quantitativo geral</option>
+              <option>Sem quantitativo</option>
+            </select>
           </div>
           <div>
             <label>Setor</label>
@@ -265,6 +273,18 @@
     <section class="block hidden" id="controleView">
       <h2>Controles definidos</h2>
       <div class="sub">Controles ja classificados, separados pelo tipo de controle. Depois refinamos aqui os padroes de quantitativo e cadastro.</div>
+      <div class="standard-grid">
+        <div class="standard-card">
+          <strong>Tubulacao - Tubos e conexoes</strong>
+          <p>Controle para isometricos, spools, linhas, tubos, conexoes, valvulas, soldas, peso e metros de tubo.</p>
+          <div class="standard-tags"><span>IS</span><span>SP</span><span>Disc. 200</span><span>Linhas</span></div>
+        </div>
+        <div class="standard-card">
+          <strong>Tubulacao - Suportes</strong>
+          <p>Controle para lista de suportes, tags de apoio, grampos, bases, guias, quantidades e vinculo com linhas.</p>
+          <div class="standard-tags"><span>LI-293</span><span>PS</span><span>BA</span><span>GI</span><span>GR</span></div>
+        </div>
+      </div>
       <div class="doc-filters" style="grid-template-columns:minmax(180px,240px) minmax(180px,240px) minmax(220px,1fr) auto auto">
         <select id="filtroTipoControleLista"><option value="">Todos os tipos</option></select>
         <select id="filtroAreaControleLista"><option value="">Todas areas</option></select>
@@ -740,7 +760,7 @@
       document.getElementById('docBusca').value = `${docsControleSelecionados.length} documentos selecionados`;
       document.getElementById('setor').value = 'Engenharia';
       document.getElementById('area').value = disciplinas.length === 1 ? disciplinas[0] : '';
-      setQuantitativo(true);
+      aplicarTipoControlePadrao(docsControleSelecionados);
       document.getElementById('temPedido').checked = false;
       document.getElementById('temMaterial').checked = false;
       document.getElementById('temMontagem').checked = false;
@@ -759,7 +779,7 @@
       document.getElementById('docBusca').value = doc.codigo_documento || '';
       document.getElementById('setor').value = 'Engenharia';
       document.getElementById('area').value = doc.disciplina || '';
-      setQuantitativo(true);
+      aplicarTipoControlePadrao([doc]);
       document.getElementById('temPedido').checked = false;
       document.getElementById('temMaterial').checked = false;
       document.getElementById('temMontagem').checked = false;
@@ -774,9 +794,25 @@
 
     function setQuantitativo(valor) {
       incluiQuantitativo = valor;
-      document.querySelectorAll('#quantToggle button').forEach(btn => {
-        btn.classList.toggle('is-active', btn.dataset.quant === (valor ? 'sim' : 'nao'));
-      });
+      const tipo = document.getElementById('tipoControle');
+      if (tipo) tipo.value = valor ? 'Quantitativo geral' : 'Sem quantitativo';
+    }
+
+    function tipoControlePadrao(doc) {
+      const codigo = String(doc?.codigo_documento || '').toUpperCase();
+      const titulo = String(doc?.titulo || '').toUpperCase();
+      const disciplina = String(doc?.disciplina || '').toUpperCase();
+      if (/^LI-.*-293-/.test(codigo) || titulo.includes('SUPORTE') || titulo.includes('SUPORTES')) return 'Tubulacao - Suportes';
+      if (/^(IS|SP)-/.test(codigo) || /-[^-]*-200-/.test(codigo) || titulo.includes('ISOMETR') || titulo.includes('SPOOL') || disciplina.includes('TUBULA')) return 'Tubulacao - Tubos e conexoes';
+      return 'Quantitativo geral';
+    }
+
+    function aplicarTipoControlePadrao(docsLote) {
+      const select = document.getElementById('tipoControle');
+      if (!select) return;
+      const tipos = [...new Set(docsLote.map(tipoControlePadrao))];
+      select.value = tipos.length === 1 ? tipos[0] : 'Quantitativo geral';
+      incluiQuantitativo = select.value !== 'Sem quantitativo';
     }
 
     function trocarFonte(novaFonte) {
@@ -798,7 +834,7 @@
       const payload = {
         documento_origem: doc.codigo_documento,
         revisao_documento: doc?.revisao || null,
-        controle_aplicavel: incluiQuantitativo ? 'Quantitativo' : 'Sem quantitativo',
+        controle_aplicavel: document.getElementById('tipoControle').value || (incluiQuantitativo ? 'Quantitativo geral' : 'Sem quantitativo'),
         setor: document.getElementById('setor').value,
         area: document.getElementById('area').value || doc?.disciplina || '',
         tem_pedido: document.getElementById('temPedido').checked,
@@ -965,9 +1001,9 @@
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
     window.addEventListener('popstate', aplicarView);
-    document.querySelectorAll('#quantToggle button').forEach(btn => {
-      btn.onclick = () => setQuantitativo(btn.dataset.quant === 'sim');
-    });
+    document.getElementById('tipoControle').onchange = () => {
+      incluiQuantitativo = document.getElementById('tipoControle').value !== 'Sem quantitativo';
+    };
     Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles()]).then(() => {
       aplicarView();
       return carregar();
