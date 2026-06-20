@@ -137,6 +137,7 @@
     .control-items { padding: 0 12px 12px; }
     .control-items table { min-width: 760px; }
     .control-empty { padding: 14px; color: #64748b; font-size: 13px; }
+    .control-note { margin: 0 12px 12px; padding: 10px 12px; border: 1px solid #fde68a; border-radius: 7px; background: #fffbeb; color: #92400e; font-size: 12px; line-height: 1.45; }
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
@@ -445,16 +446,20 @@
             <div class="metric"><strong>2</strong><span>itens de tubo no exemplo</span></div>
             <div class="metric"><strong>7</strong><span>spools no exemplo</span></div>
             <div class="metric"><strong>22,40 m</strong><span>tubo 6&quot; SCH 40</span></div>
-            <div class="metric"><strong>630,86 kg</strong><span>peso controlado</span></div>
+            <div class="metric"><strong>630,86 kg</strong><span>peso do tubo no IS</span></div>
+            <div class="metric"><strong>722,39 kg</strong><span>peso dos spools</span></div>
             <div class="metric"><strong>${r.revisao}</strong><span>em revisao</span></div>
+          </div>
+          <div class="control-note">
+            Peso do tubo vem da lista de materiais do isometrico. Peso dos spools vem do plano de corte/fabricacao e pode incluir trechos montados, ajustes e componentes; por isso nao deve ser somado ao peso do tubo como se fosse outro material.
           </div>
           <div class="control-items">
             <div class="scroll">
               <table>
-                <thead><tr><th>Item controlavel</th><th>Unidade</th><th>Qtd atual</th><th>Peso</th><th>Origem</th><th>Status</th></tr></thead>
+                <thead><tr><th>Item controlavel</th><th>Visao</th><th>Unidade</th><th>Qtd atual</th><th>Peso</th><th>Origem</th><th>Status</th></tr></thead>
                 <tbody>
-                  <tr><td><b>6&quot;-GQ-0570-1700-Bc-IQ</b></td><td>m</td><td>22,40</td><td>630,86 kg</td><td>IS-5275.00-2221-200-E6G-001</td><td><span class="pill">Exemplo</span></td></tr>
-                  <tr><td><b>SPL01 a SPL07</b></td><td>un</td><td>7</td><td>792,39 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Exemplo</span></td></tr>
+                  <tr><td><b>6&quot;-GQ-0570-1700-Bc-IQ</b></td><td>Material do isometrico</td><td>m</td><td>22,40</td><td>630,86 kg</td><td>IS-5275.00-2221-200-E6G-001</td><td><span class="pill">Base material</span></td></tr>
+                  <tr><td><b>SPL01 a SPL07</b></td><td>Fabricacao / plano de corte</td><td>un</td><td>7</td><td>722,39 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Base fabricacao</span></td></tr>
                 </tbody>
               </table>
             </div>
