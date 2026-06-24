@@ -62,6 +62,13 @@ def listar_quantitativos_controles(
     return svc.listar_quantitativos_controles(db)
 
 
+@router.get("/controle-completo", response_model=dict)
+def listar_controle_completo(
+    db: Session = Depends(get_db),
+):
+    return svc.listar_controle_completo(db)
+
+
 @router.post("/controles", response_model=ControleDocumentoOut)
 def criar_controle(
     payload: ControleDocumentoIn,

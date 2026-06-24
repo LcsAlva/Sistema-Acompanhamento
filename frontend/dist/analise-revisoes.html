@@ -169,6 +169,13 @@
     .sheet-mode-actions { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .sheet-mode-actions button { background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .sheet-mode-actions button.is-active { background: #0f4c81; color: white; }
+    .control-filters { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+    .control-filters input, .control-filters select { width: 100%; }
+    .quick-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .quick-filters button { background: #eef2ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 6px 9px; font-size: 11px; }
+    .quick-filters button.is-active { background: #0f4c81; color: #fff; border-color: #0f4c81; }
+    .grouped-control { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .grouped-control h3 { margin: 0; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
     .sheet-title span { color: #64748b; font-size: 12px; }
     #formControleBox { scroll-margin-top: 170px; }
     @media (max-width: 640px) {
@@ -226,7 +233,12 @@
         <a class="module-tab" href="/conciliacao-sigem">Status SIGEM</a>
         <a class="module-tab" href="/motor-medicao">Medicao Engenharia</a>
         <a class="module-tab is-active" id="tabNovosDocumentos" href="/analise-revisoes">Novos Documentos</a>
-        <a class="module-tab" id="tabControle" href="/analise-revisoes?view=controle">Controle</a>
+        <a class="module-tab" id="tabPendentes" href="/analise-revisoes?view=pendentes">Pendentes de Classificacao</a>
+        <a class="module-tab" id="tabClassificados" href="/analise-revisoes?view=classificados">Documentos Classificados</a>
+        <a class="module-tab" id="tabControleCompleto" href="/analise-revisoes?view=controle-completo">Controle Completo</a>
+        <a class="module-tab" id="tabControle" href="/analise-revisoes?view=controle">Quantitativos</a>
+        <a class="module-tab" id="tabRevisoes" href="/analise-revisoes?view=revisoes">Revisoes / Impactos</a>
+        <a class="module-tab" id="tabReport" href="/analise-revisoes?view=report">Report Documental</a>
       </nav>
   <main>
     <h1 class="page-title" id="pageTitle">Novos Documentos</h1>
@@ -330,6 +342,92 @@
       </div>
     </section>
 
+    <section class="block hidden" id="classificadosView">
+      <h2>Documentos Classificados</h2>
+      <div class="sub">Documentos tecnicos que ja possuem registro de controle vinculado.</div>
+      <div class="control-filters">
+        <input id="buscaClassificados" placeholder="Buscar documento, titulo, controle...">
+        <select id="filtroControleClassificados"><option value="">Todos controles</option></select>
+        <select id="filtroAreaClassificados"><option value="">Todas areas</option></select>
+        <select id="filtroStatusClassificados"><option value="">Todos status</option></select>
+      </div>
+      <div class="sheet-wrap">
+        <div class="sheet-title"><h3>Classificados</h3><span id="classificadosCount" class="count">0 linha(s)</span></div>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Documento</th><th>Titulo</th><th>Rev.</th><th>Disciplina</th><th>Area</th><th>Linha</th><th>Isometrico</th><th>Controle aplicavel</th><th>Responsavel</th><th>Quant.</th><th>Material</th><th>Pedido</th><th>Montagem</th><th>Report</th><th>Status</th><th>Controle vinculado</th></tr></thead>
+            <tbody id="tbodyClassificados"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="block hidden" id="controleCompletoView">
+      <h2>Controle Completo</h2>
+      <div class="sub">Visao operacional por area, isometrico, linha, documento e controle aplicavel.</div>
+      <div class="mode-bar">
+        <div class="sub" id="controleCompletoResumo">Carregando controle completo...</div>
+        <div class="quant-toggle">
+          <button id="btnControleResumido" class="is-active" type="button">Resumido</button>
+          <button id="btnControleDetalhado" type="button">Detalhado</button>
+          <button id="btnControleAgrupado" type="button">Agrupado</button>
+        </div>
+      </div>
+      <div class="control-filters">
+        <input id="ccBusca" placeholder="Busca geral">
+        <select id="ccArea"><option value="">Todas areas</option></select>
+        <select id="ccDisciplina"><option value="">Todas disciplinas</option></select>
+        <select id="ccControle"><option value="">Todos controles</option></select>
+        <select id="ccIsometrico"><option value="">Todos isometricos</option></select>
+        <input id="ccLinha" placeholder="Linha">
+        <input id="ccDocumento" placeholder="Documento">
+        <input id="ccRevisao" placeholder="Revisao">
+        <select id="ccStatusSigem"><option value="">Todos status SIGEM</option></select>
+        <select id="ccStatusClassificacao"><option value="">Status classificacao</option></select>
+        <select id="ccStatusControle"><option value="">Status controle</option></select>
+        <input id="ccResponsavel" placeholder="Responsavel">
+        <select id="ccImpactaQuant"><option value="">Impacta quantitativo</option><option value="sim">Sim</option><option value="nao">Nao</option></select>
+        <select id="ccImpactaMaterial"><option value="">Impacta material</option><option value="sim">Sim</option><option value="nao">Nao</option></select>
+        <select id="ccImpactaPedido"><option value="">Impacta pedido</option><option value="sim">Sim</option><option value="nao">Nao</option></select>
+        <select id="ccImpactaMontagem"><option value="">Impacta montagem</option><option value="sim">Sim</option><option value="nao">Nao</option></select>
+        <select id="ccImpactaReport"><option value="">Impacta medicao/report</option><option value="sim">Sim</option><option value="nao">Nao</option></select>
+      </div>
+      <div class="quick-filters">
+        <button type="button" data-quick="pendentes">Pendentes de classificacao</button>
+        <button type="button" data-quick="sem-controle">Sem controle vinculado</button>
+        <button type="button" data-quick="revisao">Com revisao nova</button>
+        <button type="button" data-quick="impacto">Com impacto pendente</button>
+        <button type="button" data-quick="pedido">Com pedido gerado</button>
+        <button type="button" data-quick="material">Com material pendente</button>
+        <button type="button" data-quick="montagem">Em montagem</button>
+        <button type="button" data-quick="report">Considerados em medicao</button>
+      </div>
+      <div class="sheet-wrap" id="controleCompletoTabela">
+        <div class="sheet-title"><h3>Controle completo</h3><span id="controleCompletoCount" class="count">0 linha(s)</span></div>
+        <div class="scroll">
+          <table>
+            <thead id="theadControleCompleto"></thead>
+            <tbody id="tbodyControleCompleto"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="controleCompletoAgrupado" class="hidden"></div>
+    </section>
+
+    <section class="block hidden" id="reportView">
+      <h2>Report Documental</h2>
+      <div class="sub">Rastreabilidade documental com status de controle, pedido, material, montagem e medicao/report.</div>
+      <div class="sheet-wrap">
+        <div class="sheet-title"><h3>Report documental</h3><span id="reportCount" class="count">0 linha(s)</span></div>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Documento</th><th>Rev. vigente</th><th>Titulo</th><th>Disciplina</th><th>Area</th><th>Linha</th><th>Isometrico</th><th>Controle aplicavel</th><th>Codigo controle</th><th>Status SIGEM</th><th>Status classificacao</th><th>Status controle</th><th>Pedido?</th><th>Material solicitado?</th><th>Material disponivel?</th><th>Montagem?</th><th>Medicao/report?</th><th>Status geral</th><th>Observacao</th></tr></thead>
+            <tbody id="tbodyReport"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section class="block hidden" id="controleView">
       <h2>Controle por disciplina</h2>
       <div class="sub">Visao organizada por disciplina, area de controle e quantitativos. Os documentos ficam como origem do dado, nao como a lista principal da tela.</div>
@@ -415,6 +513,7 @@
     let eventos = [];
     let controles = [];
     let quantitativos = { resumo_disciplinas: [], planilha: [] };
+    let controleCompleto = { resumo: {}, linhas: [] };
     let docs = [];
     let sigemDocs = [];
     let selecionado = null;
@@ -426,6 +525,8 @@
     let activeView = 'novos';
     let controleModo = 'tabela';
     let visaoQuantitativo = 'detalhado';
+    let modoControleCompleto = 'resumido';
+    let quickControleCompleto = '';
     let disciplinaQuantSelecionada = '';
     const disciplinasRecolhidas = new Set();
     const tiposRecolhidos = new Set();
@@ -464,6 +565,15 @@
       renderResumoDisciplinas();
       renderPlanilhaQuantitativos();
       renderControlesAgrupados();
+    }
+
+    async function carregarControleCompleto() {
+      const res = await fetch(`${API}/revisoes/controle-completo`);
+      controleCompleto = await res.json();
+      preencherFiltrosControleCompleto();
+      renderClassificados();
+      renderControleCompleto();
+      renderReportDocumental();
     }
 
     async function validarQuantitativo(codigoControle, status) {
@@ -831,14 +941,36 @@
 
     function aplicarView() {
       const params = new URLSearchParams(window.location.search);
-      activeView = params.get('view') === 'controle' ? 'controle' : 'novos';
-      document.getElementById('novosDocumentosView').classList.toggle('hidden', activeView !== 'novos');
+      const view = params.get('view') || 'novos';
+      activeView = ['novos', 'pendentes', 'classificados', 'controle-completo', 'controle', 'revisoes', 'report'].includes(view) ? view : 'novos';
+      document.getElementById('novosDocumentosView').classList.toggle('hidden', !['novos', 'pendentes'].includes(activeView));
+      document.getElementById('classificadosView').classList.toggle('hidden', activeView !== 'classificados');
+      document.getElementById('controleCompletoView').classList.toggle('hidden', activeView !== 'controle-completo');
+      document.getElementById('reportView').classList.toggle('hidden', activeView !== 'report');
       document.getElementById('controleView').classList.toggle('hidden', activeView !== 'controle');
+      document.querySelector('.toolbar').classList.toggle('hidden', activeView !== 'revisoes');
+      document.querySelector('.layout').classList.toggle('hidden', activeView !== 'revisoes');
       document.getElementById('tabNovosDocumentos').classList.toggle('is-active', activeView === 'novos');
+      document.getElementById('tabPendentes').classList.toggle('is-active', activeView === 'pendentes');
+      document.getElementById('tabClassificados').classList.toggle('is-active', activeView === 'classificados');
+      document.getElementById('tabControleCompleto').classList.toggle('is-active', activeView === 'controle-completo');
       document.getElementById('tabControle').classList.toggle('is-active', activeView === 'controle');
-      document.getElementById('pageTitle').textContent = activeView === 'controle' ? 'Controle' : 'Novos Documentos';
+      document.getElementById('tabRevisoes').classList.toggle('is-active', activeView === 'revisoes');
+      document.getElementById('tabReport').classList.toggle('is-active', activeView === 'report');
+      document.getElementById('pageTitle').textContent = ({
+        novos: 'Novos Documentos',
+        pendentes: 'Pendentes de Classificacao',
+        classificados: 'Documentos Classificados',
+        'controle-completo': 'Controle Completo',
+        controle: 'Quantitativos',
+        revisoes: 'Revisoes / Impactos',
+        report: 'Report Documental',
+      })[activeView] || 'Engenharia';
       renderControlesAgrupados();
       aplicarModoControle();
+      renderClassificados();
+      renderControleCompleto();
+      renderReportDocumental();
       atualizarResumoTopo();
     }
 
@@ -860,12 +992,94 @@
     }
 
     function atualizarResumoTopo() {
+      if (activeView === 'classificados') {
+        document.getElementById('resumo').textContent = `${(controleCompleto.linhas || []).length} documento(s)/controle(s) classificados`;
+        return;
+      }
+      if (activeView === 'controle-completo') {
+        const r = controleCompleto.resumo || {};
+        document.getElementById('resumo').textContent = `${r.controles || 0} controle(s) | ${r.documentos || 0} documento(s) | ${r.areas || 0} area(s)`;
+        return;
+      }
+      if (activeView === 'report') {
+        document.getElementById('resumo').textContent = `${(controleCompleto.linhas || []).length} linha(s) de rastreabilidade documental`;
+        return;
+      }
+      if (activeView === 'revisoes') {
+        document.getElementById('resumo').textContent = `${eventos.length} evento(s) de revisao/impacto`;
+        return;
+      }
       if (activeView === 'controle') {
         const tipos = new Set(controles.map(c => c.controle_aplicavel || 'Sem tipo'));
         document.getElementById('resumo').textContent = `${controles.length} controle(s) definido(s) · ${tipos.size} tipo(s)`;
         return;
       }
       document.getElementById('resumo').textContent = `${eventos.length} registro(s) de impacto · ${controles.length} controle(s) vinculado(s)`;
+    }
+
+    function simNao(v) {
+      return String(v || '').toLowerCase() === 'sim';
+    }
+
+    function opcoesSelect(id, valores, label) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const atual = el.value;
+      el.innerHTML = `<option value="">${label}</option>` + [...new Set(valores.filter(Boolean))].sort().map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+      el.value = atual;
+    }
+
+    function preencherFiltrosControleCompleto() {
+      const linhas = controleCompleto.linhas || [];
+      opcoesSelect('ccArea', linhas.map(l => l.area), 'Todas areas');
+      opcoesSelect('ccDisciplina', linhas.map(l => l.disciplina), 'Todas disciplinas');
+      opcoesSelect('ccControle', linhas.map(l => l.controle_aplicavel), 'Todos controles');
+      opcoesSelect('ccIsometrico', linhas.map(l => l.isometrico), 'Todos isometricos');
+      opcoesSelect('ccStatusSigem', linhas.map(l => l.status_sigem), 'Todos status SIGEM');
+      opcoesSelect('ccStatusClassificacao', linhas.map(l => l.status_classificacao), 'Status classificacao');
+      opcoesSelect('ccStatusControle', linhas.map(l => l.status_controle), 'Status controle');
+      opcoesSelect('filtroControleClassificados', linhas.map(l => l.controle_aplicavel), 'Todos controles');
+      opcoesSelect('filtroAreaClassificados', linhas.map(l => l.area), 'Todas areas');
+      opcoesSelect('filtroStatusClassificados', linhas.map(l => l.status_controle), 'Todos status');
+    }
+
+    function controleCompletoFiltrado() {
+      let linhas = [...(controleCompleto.linhas || [])];
+      const igual = (id, campo) => {
+        const valor = document.getElementById(id)?.value || '';
+        if (valor) linhas = linhas.filter(l => String(l[campo] || '') === valor);
+      };
+      ['ccArea:area','ccDisciplina:disciplina','ccControle:controle_aplicavel','ccIsometrico:isometrico','ccStatusSigem:status_sigem','ccStatusClassificacao:status_classificacao','ccStatusControle:status_controle'].forEach(pair => {
+        const [id, campo] = pair.split(':');
+        igual(id, campo);
+      });
+      const contem = (id, campo) => {
+        const valor = (document.getElementById(id)?.value || '').toLowerCase().trim();
+        if (valor) linhas = linhas.filter(l => String(l[campo] || '').toLowerCase().includes(valor));
+      };
+      ['ccLinha:linha','ccDocumento:codigo_documento','ccRevisao:revisao_vigente','ccResponsavel:responsavel'].forEach(pair => {
+        const [id, campo] = pair.split(':');
+        contem(id, campo);
+      });
+      const busca = (document.getElementById('ccBusca')?.value || '').toLowerCase().trim();
+      if (busca) linhas = linhas.filter(l => Object.values(l).join(' ').toLowerCase().includes(busca));
+      const filtroSimNao = (id, campo) => {
+        const valor = document.getElementById(id)?.value || '';
+        if (valor === 'sim') linhas = linhas.filter(l => campo === 'quantidade_prevista' ? l[campo] !== null && l[campo] !== undefined : simNao(l[campo]));
+        if (valor === 'nao') linhas = linhas.filter(l => campo === 'quantidade_prevista' ? l[campo] === null || l[campo] === undefined : !simNao(l[campo]));
+      };
+      filtroSimNao('ccImpactaQuant', 'quantidade_prevista');
+      filtroSimNao('ccImpactaMaterial', 'material_solicitado');
+      filtroSimNao('ccImpactaPedido', 'pedido_gerado');
+      filtroSimNao('ccImpactaMontagem', 'montagem');
+      filtroSimNao('ccImpactaReport', 'medicao_report');
+      if (quickControleCompleto === 'pedido') linhas = linhas.filter(l => simNao(l.pedido_gerado));
+      if (quickControleCompleto === 'material') linhas = linhas.filter(l => !simNao(l.material_solicitado));
+      if (quickControleCompleto === 'montagem') linhas = linhas.filter(l => simNao(l.montagem));
+      if (quickControleCompleto === 'report') linhas = linhas.filter(l => simNao(l.medicao_report));
+      if (quickControleCompleto === 'revisao' || quickControleCompleto === 'impacto') linhas = linhas.filter(l => normalizarTexto(l.status_geral).includes('REVISAR'));
+      if (quickControleCompleto === 'pendentes' || quickControleCompleto === 'sem-controle') linhas = [];
+      return linhas;
     }
 
     function preencherFiltrosDocs() {
@@ -1259,6 +1473,7 @@
         lote.forEach(d => docsSelecionados.delete(d.codigo_documento));
         await carregarControles();
         await carregarQuantitativos();
+        await carregarControleCompleto();
         cancelarControle();
         await carregar();
         alert(`${lote.length} documento(s) classificados.`);
@@ -1276,6 +1491,7 @@
       }
       await carregarControles();
       await carregarQuantitativos();
+      await carregarControleCompleto();
       cancelarControle();
       await carregar();
       alert('Documento classificado.');
@@ -1292,10 +1508,90 @@
       const data = await res.json();
       await carregarControles();
       await carregarQuantitativos();
+      await carregarControleCompleto();
       await carregarDocs();
       await carregarSigemDocs();
       await carregar();
       alert(`${data.criados} controle(s) criado(s). ${data.ignorados_ja_classificados} documento(s) ja estavam classificados.`);
+    }
+
+    function renderClassificados() {
+      const tbody = document.getElementById('tbodyClassificados');
+      if (!tbody) return;
+      let linhas = [...(controleCompleto.linhas || [])];
+      const busca = (document.getElementById('buscaClassificados')?.value || '').toLowerCase().trim();
+      const controle = document.getElementById('filtroControleClassificados')?.value || '';
+      const area = document.getElementById('filtroAreaClassificados')?.value || '';
+      const status = document.getElementById('filtroStatusClassificados')?.value || '';
+      if (busca) linhas = linhas.filter(l => Object.values(l).join(' ').toLowerCase().includes(busca));
+      if (controle) linhas = linhas.filter(l => l.controle_aplicavel === controle);
+      if (area) linhas = linhas.filter(l => l.area === area);
+      if (status) linhas = linhas.filter(l => l.status_controle === status);
+      document.getElementById('classificadosCount').textContent = `${linhas.length} linha(s)`;
+      tbody.innerHTML = linhas.length ? linhas.map(l => `
+        <tr>
+          <td><b>${esc(l.codigo_documento)}</b></td><td>${esc(l.titulo_documento || '-')}</td><td>${esc(l.revisao_vigente || '-')}</td><td>${esc(l.disciplina || '-')}</td><td>${esc(l.area || '-')}</td><td>${esc(l.linha || '-')}</td><td>${esc(l.isometrico || '-')}</td><td>${esc(l.controle_aplicavel || '-')}</td><td>${esc(l.responsavel || '-')}</td><td>${l.quantidade_prevista !== null && l.quantidade_prevista !== undefined ? 'Sim' : '-'}</td><td>${esc(l.material_solicitado)}</td><td>${esc(l.pedido_gerado)}</td><td>${esc(l.montagem)}</td><td>${esc(l.medicao_report)}</td><td><span class="pill">${esc(l.status_classificacao)}</span></td><td><b>${esc(l.codigo_controle)}</b></td>
+        </tr>
+      `).join('') : '<tr><td colspan="16">Nenhum documento classificado com os filtros atuais.</td></tr>';
+    }
+
+    function pendenciasControle(l) {
+      const pend = [];
+      if (!simNao(l.pedido_gerado)) pend.push('pedido nao vinculado');
+      if (!simNao(l.material_solicitado)) pend.push('material nao informado');
+      if (!simNao(l.montagem)) pend.push('montagem nao informada');
+      if (normalizarTexto(l.status_geral).includes('REVISAR')) pend.push('revisar impacto');
+      return pend.join(', ') || '-';
+    }
+
+    function renderControleCompleto() {
+      const linhas = controleCompletoFiltrado();
+      const tbody = document.getElementById('tbodyControleCompleto');
+      const thead = document.getElementById('theadControleCompleto');
+      if (!tbody || !thead) return;
+      const r = controleCompleto.resumo || {};
+      document.getElementById('controleCompletoResumo').textContent = `${r.controles || 0} controle(s), ${r.documentos || 0} documento(s), ${r.areas || 0} area(s), ${r.isometricos || 0} isometrico(s) identificado(s)`;
+      document.getElementById('controleCompletoCount').textContent = `${linhas.length} linha(s)`;
+      document.querySelectorAll('.quick-filters button').forEach(btn => btn.classList.toggle('is-active', btn.dataset.quick === quickControleCompleto));
+      document.getElementById('controleCompletoTabela').classList.toggle('hidden', modoControleCompleto === 'agrupado');
+      document.getElementById('controleCompletoAgrupado').classList.toggle('hidden', modoControleCompleto !== 'agrupado');
+      document.getElementById('btnControleResumido')?.classList.toggle('is-active', modoControleCompleto === 'resumido');
+      document.getElementById('btnControleDetalhado')?.classList.toggle('is-active', modoControleCompleto === 'detalhado');
+      document.getElementById('btnControleAgrupado')?.classList.toggle('is-active', modoControleCompleto === 'agrupado');
+      if (modoControleCompleto === 'agrupado') return renderControleAgrupado(linhas);
+      if (modoControleCompleto === 'resumido') {
+        thead.innerHTML = '<tr><th>Area</th><th>Isometrico</th><th>Linha</th><th>Documento principal</th><th>Rev.</th><th>Controles vinculados</th><th>Status geral</th><th>Pendencias</th></tr>';
+        tbody.innerHTML = linhas.length ? linhas.map(l => `<tr><td>${esc(l.area)}</td><td>${esc(l.isometrico)}</td><td>${esc(l.linha)}</td><td><b>${esc(l.codigo_documento)}</b></td><td>${esc(l.revisao_vigente || '-')}</td><td>${esc(l.controle_aplicavel)} | ${esc(l.codigo_controle)}</td><td><span class="pill">${esc(l.status_geral)}</span></td><td>${esc(pendenciasControle(l))}</td></tr>`).join('') : '<tr><td colspan="8">Nenhum controle completo com os filtros atuais.</td></tr>';
+      } else {
+        thead.innerHTML = '<tr><th>Area</th><th>Isometrico</th><th>Linha</th><th>Documento</th><th>Titulo</th><th>Rev.</th><th>Disciplina</th><th>Controle aplicavel</th><th>Codigo controle</th><th>Responsavel</th><th>Status controle</th><th>Qtd prevista</th><th>Unid.</th><th>Pedido</th><th>Material solicitado</th><th>Material disponivel</th><th>Montagem</th><th>Medicao/report</th><th>Observacao</th></tr>';
+        tbody.innerHTML = linhas.length ? linhas.map(l => `<tr><td>${esc(l.area)}</td><td>${esc(l.isometrico)}</td><td>${esc(l.linha)}</td><td><b>${esc(l.codigo_documento)}</b></td><td>${esc(l.titulo_documento || '-')}</td><td>${esc(l.revisao_vigente || '-')}</td><td>${esc(l.disciplina)}</td><td>${esc(l.controle_aplicavel)}</td><td><b>${esc(l.codigo_controle)}</b></td><td>${esc(l.responsavel)}</td><td><span class="pill">${esc(l.status_controle)}</span></td><td>${fmtNumero(l.quantidade_prevista)}</td><td>${esc(l.unidade)}</td><td>${esc(l.pedido_gerado)}</td><td>${esc(l.material_solicitado)}</td><td>${esc(l.material_disponivel)}</td><td>${esc(l.montagem)}</td><td>${esc(l.medicao_report)}</td><td>${esc(l.observacao || '-')}</td></tr>`).join('') : '<tr><td colspan="19">Nenhum controle completo com os filtros atuais.</td></tr>';
+      }
+    }
+
+    function renderControleAgrupado(linhas) {
+      const container = document.getElementById('controleCompletoAgrupado');
+      if (!container) return;
+      const grupos = linhas.reduce((acc, l) => {
+        const area = l.area || 'Nao informado';
+        const iso = l.isometrico || 'Nao informado';
+        acc[area] = acc[area] || {};
+        acc[area][iso] = acc[area][iso] || [];
+        acc[area][iso].push(l);
+        return acc;
+      }, {});
+      container.innerHTML = Object.keys(grupos).sort().map(area => `
+        <section class="grouped-control"><h3>${esc(area)}</h3>
+        ${Object.keys(grupos[area]).sort().map(iso => `<div class="area-control-head"><strong>${esc(iso)}</strong><span>${grupos[area][iso].length} controle(s)</span></div><div class="scroll"><table><thead><tr><th>Documento</th><th>Linha</th><th>Controle</th><th>Status</th><th>Pedido</th><th>Material</th><th>Montagem</th><th>Report</th></tr></thead><tbody>${grupos[area][iso].map(l => `<tr><td><b>${esc(l.codigo_documento)}</b></td><td>${esc(l.linha)}</td><td>${esc(l.codigo_controle)} | ${esc(l.controle_aplicavel)}</td><td><span class="pill">${esc(l.status_geral)}</span></td><td>${esc(l.pedido_gerado)}</td><td>${esc(l.material_solicitado)}</td><td>${esc(l.montagem)}</td><td>${esc(l.medicao_report)}</td></tr>`).join('')}</tbody></table></div>`).join('')}
+        </section>
+      `).join('') || '<div class="control-empty">Nenhum controle para agrupar.</div>';
+    }
+
+    function renderReportDocumental() {
+      const tbody = document.getElementById('tbodyReport');
+      if (!tbody) return;
+      const linhas = controleCompleto.linhas || [];
+      document.getElementById('reportCount').textContent = `${linhas.length} linha(s)`;
+      tbody.innerHTML = linhas.length ? linhas.map(l => `<tr><td><b>${esc(l.codigo_documento)}</b></td><td>${esc(l.revisao_vigente || '-')}</td><td>${esc(l.titulo_documento || '-')}</td><td>${esc(l.disciplina)}</td><td>${esc(l.area)}</td><td>${esc(l.linha)}</td><td>${esc(l.isometrico)}</td><td>${esc(l.controle_aplicavel)}</td><td><b>${esc(l.codigo_controle)}</b></td><td>${esc(l.status_sigem)}</td><td>${esc(l.status_classificacao)}</td><td>${esc(l.status_controle)}</td><td>${esc(l.pedido_gerado)}</td><td>${esc(l.material_solicitado)}</td><td>${esc(l.material_disponivel)}</td><td>${esc(l.montagem)}</td><td>${esc(l.medicao_report)}</td><td><span class="pill">${esc(l.status_geral)}</span></td><td>${esc(l.observacao || '-')}</td></tr>`).join('') : '<tr><td colspan="19">Nenhuma linha de report documental.</td></tr>';
     }
 
     async function carregar() {
@@ -1417,13 +1713,30 @@
       visaoQuantitativo = 'consolidado';
       renderPlanilhaQuantitativos();
     };
+    ['buscaClassificados','filtroControleClassificados','filtroAreaClassificados','filtroStatusClassificados'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.oninput = el.onchange = renderClassificados;
+    });
+    ['ccBusca','ccArea','ccDisciplina','ccControle','ccIsometrico','ccLinha','ccDocumento','ccRevisao','ccStatusSigem','ccStatusClassificacao','ccStatusControle','ccResponsavel','ccImpactaQuant','ccImpactaMaterial','ccImpactaPedido','ccImpactaMontagem','ccImpactaReport'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.oninput = el.onchange = renderControleCompleto;
+    });
+    document.getElementById('btnControleResumido').onclick = () => { modoControleCompleto = 'resumido'; renderControleCompleto(); };
+    document.getElementById('btnControleDetalhado').onclick = () => { modoControleCompleto = 'detalhado'; renderControleCompleto(); };
+    document.getElementById('btnControleAgrupado').onclick = () => { modoControleCompleto = 'agrupado'; renderControleCompleto(); };
+    document.querySelectorAll('.quick-filters button').forEach(btn => {
+      btn.onclick = () => {
+        quickControleCompleto = quickControleCompleto === btn.dataset.quick ? '' : btn.dataset.quick;
+        renderControleCompleto();
+      };
+    });
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
     window.addEventListener('popstate', aplicarView);
     document.getElementById('tipoControle').onchange = () => {
       incluiQuantitativo = document.getElementById('tipoControle').value !== 'Sem quantitativo';
     };
-    Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles(), carregarQuantitativos()]).then(() => {
+    Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles(), carregarQuantitativos(), carregarControleCompleto()]).then(() => {
       aplicarView();
       return carregar();
     }).catch(e => {

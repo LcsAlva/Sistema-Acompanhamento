@@ -112,3 +112,40 @@ def test_listar_quantitativos_controles_resume_por_disciplina(db):
     assert data["planilha"][0]["unidade_principal"] == "m3"
     assert data["planilha"][0]["a4_equivalente"] == 8
     assert data["planilha"][0]["quantidade_extraida"] is None
+
+
+def test_listar_controle_completo_usa_dados_existentes_sem_inventar(db):
+    db.add(LdDocumento(
+        codigo_documento="IS-5275.00-2221-200-E6G-001",
+        titulo="Isometrico de tubulacao",
+        disciplina="TUBULACAO",
+        revisao="B",
+        status="SEM WORKFLOW",
+    ))
+    db.add(SigemDocumento(
+        codigo_documento="IS-5275.00-2221-200-E6G-001",
+        revisao="B",
+        status="POSTADO",
+        nivel_1="DOCUMENTACAO TECNICA",
+        nivel_4="TUBULACAO",
+    ))
+    db.add(ControleDocumento(
+        codigo_controle="CTRL-IS-001",
+        documento_origem="IS-5275.00-2221-200-E6G-001",
+        revisao_documento="B",
+        controle_aplicavel="Tubulacao - Tubos e conexoes",
+        setor="Engenharia",
+        area="Area 200",
+        status_controle="Aberto",
+    ))
+    db.commit()
+
+    data = svc.listar_controle_completo(db)
+
+    assert data["resumo"]["controles"] == 1
+    linha = data["linhas"][0]
+    assert linha["codigo_documento"] == "IS-5275.00-2221-200-E6G-001"
+    assert linha["area"] == "Area 200"
+    assert linha["isometrico"] == "IS-5275.00-2221-200-E6G-001"
+    assert linha["quantidade_prevista"] is None
+    assert linha["material_disponivel"] == "Nao informado"

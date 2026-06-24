@@ -488,6 +488,100 @@ def _unidade_principal(tipo: str | None) -> str:
     return "doc"
 
 
+def _inferir_isometrico(codigo: str | None, titulo: str | None) -> str:
+    codigo_norm = _norm(codigo)
+    titulo_norm = _norm(titulo)
+    if _norm_upper(codigo_norm).startswith(("IS-", "SP-")):
+        return codigo_norm
+    match = re.search(r"\b(?:IS|ISO|ISOMETRICO)[-\s:]*([A-Z0-9.-]+)", _norm_upper(titulo_norm))
+    return match.group(0) if match else "Nao informado"
+
+
+def _inferir_linha(codigo: str | None, titulo: str | None) -> str:
+    texto = f"{titulo or ''}"
+    for padrao in (
+        r"\bLINHA\s*[:\-]?\s*([A-Z0-9./-]+)",
+        r"\bLINE\s*[:\-]?\s*([A-Z0-9./-]+)",
+        r"\b\d{1,2}['\"]?-[A-Z0-9]{1,8}-\d{3,5}-[A-Z0-9-]+",
+    ):
+        match = re.search(padrao, _norm_upper(texto))
+        if match:
+            return match.group(1) if match.groups() else match.group(0)
+    return "Nao informado"
+
+
+def _status_geral(controle: ControleDocumento | None, classificado: bool, revisao_pendente: bool) -> str:
+    if revisao_pendente:
+        return "Revisar impacto"
+    if not classificado:
+        return "Pendente classificacao"
+    if controle and controle.status_controle:
+        return controle.status_controle
+    return "Classificado"
+
+
+def listar_controle_completo(db: Session) -> dict:
+    lds = {doc.codigo_documento: doc for doc in db.query(LdDocumento).all()}
+    sigems = {doc.codigo_documento: doc for doc in db.query(SigemDocumento).all()}
+    eventos_pendentes = {
+        evento.codigo_documento
+        for evento in db.query(EventoRevisaoDocumento).all()
+        if evento.status_analise not in {"Sem impacto", "Revisao tratada", "Cancelado"}
+    }
+    quant_por_controle: dict[int, dict[str, float]] = {}
+    for item in db.query(ControleQuantitativo).all():
+        unidade = _normaliza_unidade(item.unidade)
+        bucket = quant_por_controle.setdefault(item.controle_id, {})
+        bucket[unidade] = bucket.get(unidade, 0.0) + float(item.quantidade or 0)
+
+    linhas = []
+    for controle in listar_controles(db):
+        ld = lds.get(controle.documento_origem)
+        sigem = sigems.get(controle.documento_origem)
+        titulo = (ld.titulo if ld else None) or (_titulo_sigem(sigem) if sigem else None) or ""
+        disciplina = (ld.disciplina if ld else None) or (_area_sigem(sigem) if sigem else None) or "Nao informado"
+        area = controle.area or disciplina or "Nao informado"
+        unidade = _unidade_principal(controle.controle_aplicavel)
+        qtd = quant_por_controle.get(controle.id, {}).get(unidade)
+        revisao_pendente = controle.documento_origem in eventos_pendentes or controle.status_controle == STATUS_CONTROLE_REVISAO
+        linha = {
+            "area": area,
+            "isometrico": _inferir_isometrico(controle.documento_origem, titulo),
+            "linha": _inferir_linha(controle.documento_origem, titulo),
+            "codigo_documento": controle.documento_origem,
+            "titulo_documento": titulo,
+            "revisao_vigente": controle.revisao_documento or (sigem.revisao if sigem else None) or (ld.revisao if ld else None),
+            "disciplina": disciplina,
+            "controle_aplicavel": controle.controle_aplicavel or "Nao informado",
+            "codigo_controle": controle.codigo_controle,
+            "responsavel": controle.setor or "Nao informado",
+            "status_controle": controle.status_controle or "Aberto",
+            "quantidade_prevista": round(qtd, 3) if qtd is not None else None,
+            "unidade": unidade,
+            "pedido_gerado": "Sim" if controle.tem_pedido or controle.numero_pedido else "Nao",
+            "material_solicitado": "Sim" if controle.tem_material else "Nao",
+            "material_disponivel": "Nao informado",
+            "montagem": "Sim" if controle.tem_montagem else "Nao",
+            "medicao_report": "Sim" if controle.entrou_medicao_report else "Nao",
+            "status_sigem": sigem.status if sigem else "Nao informado",
+            "status_classificacao": "Classificado",
+            "status_geral": _status_geral(controle, True, revisao_pendente),
+            "observacao": "Quantidade extraida de PDF, revisar" if qtd is not None else "Sem quantitativo extraido",
+        }
+        linhas.append(linha)
+
+    linhas.sort(key=lambda item: (item["area"], item["isometrico"], item["linha"], item["codigo_documento"], item["codigo_controle"]))
+    return {
+        "linhas": linhas,
+        "resumo": {
+            "controles": len(linhas),
+            "documentos": len({linha["codigo_documento"] for linha in linhas}),
+            "areas": len({linha["area"] for linha in linhas}),
+            "isometricos": len({linha["isometrico"] for linha in linhas if linha["isometrico"] != "Nao informado"}),
+        },
+    }
+
+
 def _workspace_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
