@@ -55,6 +55,13 @@ def listar_controles(
     return svc.listar_controles(db, documento=documento, q=q)
 
 
+@router.get("/controles/quantitativos", response_model=dict)
+def listar_quantitativos_controles(
+    db: Session = Depends(get_db),
+):
+    return svc.listar_quantitativos_controles(db)
+
+
 @router.post("/controles", response_model=ControleDocumentoOut)
 def criar_controle(
     payload: ControleDocumentoIn,
@@ -62,5 +69,49 @@ def criar_controle(
 ):
     try:
         return svc.criar_controle(db, payload)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@router.post("/controles/classificar-pendentes", response_model=dict)
+def classificar_controles_pendentes(
+    fonte: str = Query("sigem", description="sigem, ld ou todos"),
+    db: Session = Depends(get_db),
+):
+    try:
+        return svc.classificar_controles_pendentes(db, fonte=fonte)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@router.post("/controles/quantificar-pdfs", response_model=dict)
+def quantificar_controles_por_pdfs(
+    disciplina: Optional[str] = Query(None),
+    limite: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    return svc.quantificar_controles_por_pdfs(db, disciplina=disciplina, limite=limite)
+
+
+@router.post("/controles/{codigo_controle}/quantitativos/validar", response_model=dict)
+def validar_quantitativos_controle(
+    codigo_controle: str,
+    status: str = Query("Validado"),
+    db: Session = Depends(get_db),
+):
+    try:
+        return svc.validar_quantitativos_controle(db, codigo_controle, status)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@router.post("/controles/quantitativos/{item_id}/validar", response_model=dict)
+def validar_quantitativo_item(
+    item_id: int,
+    status: str = Query("Validado"),
+    db: Session = Depends(get_db),
+):
+    try:
+        return svc.validar_quantitativo_item(db, item_id, status)
     except ValueError as exc:
         raise HTTPException(400, str(exc))

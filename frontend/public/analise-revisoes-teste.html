@@ -141,7 +141,35 @@
     .quant-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
     .quant-toggle button { min-width: 52px; background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
     .quant-toggle button.is-active { background: #0f4c81; color: white; }
+    .mode-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding: 10px 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #f8fbff; }
+    .mode-bar .sub { margin: 0; }
     .ld-manual-box { margin-top: 12px; padding: 12px; border: 1px dashed #93c5fd; border-radius: 8px; background: #f8fbff; }
+    .sheet-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 10px; margin-top: 14px; }
+    .summary-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #fff; }
+    .summary-card[data-disciplina] { cursor: pointer; }
+    .summary-card.is-selected { border-color: #2563eb; box-shadow: inset 3px 0 0 #2563eb; background: #eff6ff; }
+    .summary-card strong { display: block; color: #0f172a; font-size: 16px; }
+    .summary-card span { display: block; margin-top: 3px; color: #64748b; font-size: 11px; }
+    .summary-card .summary-line { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; color: #334155; font-size: 12px; }
+    .sheet-wrap { margin-top: 14px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: white; }
+    .sheet-wrap table { min-width: 1680px; }
+    .sheet-wrap th { position: sticky; top: 0; z-index: 1; background: #f8fafc; }
+    .sheet-wrap td { white-space: nowrap; }
+    .sheet-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+    .sheet-title h3 { margin: 0; font-size: 14px; }
+    .doc-quant-cell { min-width: 250px; }
+    .doc-quant-cell strong { display: block; color: #0f172a; }
+    .doc-quant-cell span { display: block; margin-top: 3px; color: #64748b; font-size: 11px; }
+    .quant-value { font-weight: 800; color: #0f4c81; }
+    .quant-evidence { min-width: 320px; max-width: 430px; white-space: normal !important; color: #334155; line-height: 1.35; }
+    .quant-source { display: block; margin-top: 4px; color: #64748b; font-size: 11px; }
+    .validation-actions { display: flex; gap: 6px; align-items: center; }
+    .validation-actions button { padding: 6px 8px; font-size: 11px; }
+    .sheet-mode-actions { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; }
+    .sheet-mode-actions button { background: transparent; color: #475569; border-radius: 5px; padding: 6px 10px; }
+    .sheet-mode-actions button.is-active { background: #0f4c81; color: white; }
+    .sheet-title span { color: #64748b; font-size: 12px; }
     #formControleBox { scroll-margin-top: 170px; }
     @media (max-width: 640px) {
       .app-shell { flex-direction: column; }
@@ -223,6 +251,10 @@
             <select id="tipoControle">
               <option>Tubulacao - Tubos e conexoes</option>
               <option>Tubulacao - Suportes</option>
+              <option>Construcao civil - m3 de concreto</option>
+              <option>Construcao civil - Armadura</option>
+              <option>Construcao civil - Estrutura metalica</option>
+              <option>Construcao civil - Geral</option>
               <option>Quantitativo geral</option>
               <option>Sem quantitativo</option>
             </select>
@@ -269,6 +301,7 @@
           <button class="outline" id="btnSelecionarVisiveis" type="button">Selecionar visiveis</button>
           <button class="secondary" id="btnLimparSelecao" type="button">Limpar selecao</button>
           <button id="btnClassificarSelecionados" type="button">Classificar selecionados</button>
+          <button id="btnClassificarPendentes" type="button">Classificar pendentes</button>
         </div>
       </div>
       <div id="sigemClassificacaoLista" class="doc-list">
@@ -300,7 +333,47 @@
     <section class="block hidden" id="controleView">
       <h2>Controle por disciplina</h2>
       <div class="sub">Visao organizada por disciplina, area de controle e quantitativos. Os documentos ficam como origem do dado, nao como a lista principal da tela.</div>
-      <div id="controleHierarquia" class="control-hierarchy"></div>
+      <div class="mode-bar">
+        <div class="sub">Escolha entre a planilha consolidada e os controles agrupados por disciplina.</div>
+        <div class="quant-toggle">
+          <button id="btnModoTabela" class="is-active" type="button">Tabela</button>
+          <button id="btnModoControle" type="button">Controle</button>
+        </div>
+      </div>
+      <div id="tabelaQuantitativos">
+        <div class="sheet-toolbar">
+          <div>
+            <h2 style="margin:0">Resumo por disciplina</h2>
+            <div class="sub">Totais de controles, documentos, tipos, A4 e pendencias operacionais.</div>
+          </div>
+          <button class="outline" id="btnAtualizarQuantitativos" type="button">Atualizar quantitativos</button>
+        </div>
+        <div id="resumoDisciplinas" class="summary-grid"></div>
+        <div class="sheet-wrap">
+          <div class="sheet-title">
+            <div>
+              <h3>Planilha de controles quantitativos</h3>
+              <span>Base rastreavel por desenho, item extraido, area, material quando identificado no documento, evidencia e validacao.</span>
+            </div>
+            <div class="sheet-mode-actions">
+              <button id="btnQuantDetalhado" class="is-active" type="button">Detalhado</button>
+              <button id="btnQuantConsolidado" type="button">Consolidado</button>
+              <span id="planilhaCount" class="count">0 linha(s)</span>
+            </div>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead id="theadQuantitativos">
+                <tr>
+                  <th>Disciplina</th><th>Tipo</th><th>Controle</th><th>Documento</th><th>Qtd extraida</th><th>Unid.</th><th>Evidencia</th><th>Validacao</th><th>Titulo</th><th>Rev.</th><th>Status controle</th><th>Qtd controle</th><th>A4</th><th>Pedido</th><th>Material</th><th>Montagem</th><th>Report</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyQuantitativos"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="controleHierarquia" class="control-hierarchy hidden"></div>
     </section>
 
     <div class="toolbar">
@@ -341,6 +414,7 @@
     const API = '/api';
     let eventos = [];
     let controles = [];
+    let quantitativos = { resumo_disciplinas: [], planilha: [] };
     let docs = [];
     let sigemDocs = [];
     let selecionado = null;
@@ -350,12 +424,17 @@
     let incluiQuantitativo = true;
     let organizarPorTipo = false;
     let activeView = 'novos';
+    let controleModo = 'tabela';
+    let visaoQuantitativo = 'detalhado';
+    let disciplinaQuantSelecionada = '';
     const disciplinasRecolhidas = new Set();
     const tiposRecolhidos = new Set();
     const docsSelecionados = new Set();
 
     const fmtData = (v) => v ? new Date(v).toLocaleString('pt-BR') : '-';
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const fmtNumero = (v) => (v === null || v === undefined || v === '') ? '-' : Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    const nomeArquivo = (caminho) => String(caminho || '').split(/[\\/]/).filter(Boolean).pop() || caminho || '';
 
     async function carregarDocs() {
       const res = await fetch(`${API}/ld/documentos`);
@@ -377,6 +456,36 @@
       renderMiniControles();
       renderControlesAgrupados();
       renderDocsSemControle();
+    }
+
+    async function carregarQuantitativos() {
+      const res = await fetch(`${API}/revisoes/controles/quantitativos`);
+      quantitativos = await res.json();
+      renderResumoDisciplinas();
+      renderPlanilhaQuantitativos();
+      renderControlesAgrupados();
+    }
+
+    async function validarQuantitativo(codigoControle, status) {
+      if (!codigoControle) return;
+      const res = await fetch(`${API}/revisoes/controles/${encodeURIComponent(codigoControle)}/quantitativos/validar?status=${encodeURIComponent(status)}`, { method: 'POST' });
+      if (!res.ok) {
+        const erro = await res.text();
+        alert(`Nao foi possivel atualizar a validacao: ${erro}`);
+        return;
+      }
+      await carregarQuantitativos();
+    }
+
+    async function validarQuantitativoItem(itemId, status) {
+      if (!itemId) return;
+      const res = await fetch(`${API}/revisoes/controles/quantitativos/${encodeURIComponent(itemId)}/validar?status=${encodeURIComponent(status)}`, { method: 'POST' });
+      if (!res.ok) {
+        const erro = await res.text();
+        alert(`Nao foi possivel atualizar a validacao: ${erro}`);
+        return;
+      }
+      await carregarQuantitativos();
     }
 
     function alertasControle(c) {
@@ -406,7 +515,12 @@
       if (!container) return;
       const tubos = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('tubos'));
       const suportes = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('suporte'));
-      const outros = controles.filter(c => !tubos.includes(c) && !suportes.includes(c));
+      const concreto = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('m3 de concreto'));
+      const armadura = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('armadura'));
+      const metalica = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('estrutura metalica'));
+      const civilGeral = controles.filter(c => (c.controle_aplicavel || '').toLowerCase().includes('construcao civil - geral'));
+      const civil = [...concreto, ...armadura, ...metalica, ...civilGeral];
+      const outros = controles.filter(c => !tubos.includes(c) && !suportes.includes(c) && !civil.includes(c));
       container.innerHTML = `
         <section class="discipline-control">
           <div class="discipline-control-head">
@@ -421,8 +535,161 @@
             ${areaSuportesTubulacao(suportes)}
           </div>
         </section>
+        <section class="discipline-control">
+          <div class="discipline-control-head">
+            <div>
+              <h3>Construcao civil</h3>
+              <p>Documentos civis classificados por concreto, armadura, estrutura metalica e controles gerais.</p>
+            </div>
+            <span class="pill">${civil.length} controle(s)</span>
+          </div>
+          <div class="area-grid">
+            ${areaCivilControle('m3 de concreto', concreto, 'Volume de concreto, bases, blocos, envelopes, fundacoes e estruturas de concreto.', 'm3')}
+            ${areaCivilControle('Armadura', armadura, 'Armacoes, barras, telas, formas e armaduras vinculadas a fundacoes e estruturas.', 'kg')}
+            ${areaCivilControle('Estrutura metalica', metalica, 'Plataformas, pipe-racks, ligacoes, cortes, detalhes e pecas metalicas.', 'kg')}
+            ${areaCivilControle('Geral civil', civilGeral, 'Topografia, locacao, sondagem e documentos civis sem quantitativo principal definido.', 'doc')}
+          </div>
+        </section>
         ${outros.length ? areaOutrosControles(outros) : ''}
       `;
+    }
+
+    function renderResumoDisciplinas() {
+      const container = document.getElementById('resumoDisciplinas');
+      if (!container) return;
+      const lista = quantitativos.resumo_disciplinas || [];
+      container.innerHTML = lista.length ? lista.map(item => `
+        <article class="summary-card ${disciplinaQuantSelecionada === item.disciplina ? 'is-selected' : ''}" data-disciplina="${esc(item.disciplina)}" title="Filtrar planilha por disciplina">
+          <strong>${esc(item.disciplina)}</strong>
+          <span>${fmtNumero(item.controles)} controle(s) · ${fmtNumero(item.documentos)} documento(s)</span>
+          <div class="summary-line"><span>Tipos</span><b>${fmtNumero(item.tipos)}</b></div>
+          <div class="summary-line"><span>Abertos</span><b>${fmtNumero(item.abertos)}</b></div>
+          <div class="summary-line"><span>Em revisao</span><b>${fmtNumero(item.em_revisao)}</b></div>
+          <div class="summary-line"><span>Quantificados</span><b>${fmtNumero(item.controles_quantificados)}</b></div>
+          <div class="summary-line"><span>m / m3</span><b>${fmtNumero(item.extraido_m)} / ${fmtNumero(item.extraido_m3)}</b></div>
+          <div class="summary-line"><span>kg / un</span><b>${fmtNumero(item.extraido_kg)} / ${fmtNumero(item.extraido_un)}</b></div>
+          <div class="summary-line"><span>A4 total</span><b>${fmtNumero(item.a4_total)}</b></div>
+          <div class="summary-line"><span>Pedido / material</span><b>${fmtNumero(item.com_pedido)} / ${fmtNumero(item.com_material)}</b></div>
+          <div class="summary-line"><span>Montagem / report</span><b>${fmtNumero(item.com_montagem)} / ${fmtNumero(item.em_report)}</b></div>
+        </article>
+      `).join('') : '<div class="control-empty">Nenhum quantitativo consolidado ainda.</div>';
+      container.querySelectorAll('.summary-card[data-disciplina]').forEach(card => {
+        card.onclick = () => {
+          const disciplina = card.dataset.disciplina || '';
+          disciplinaQuantSelecionada = disciplinaQuantSelecionada === disciplina ? '' : disciplina;
+          controleModo = 'tabela';
+          aplicarModoControle();
+          renderResumoDisciplinas();
+          renderPlanilhaQuantitativos();
+        };
+      });
+    }
+
+    function renderPlanilhaQuantitativos() {
+      document.getElementById('btnQuantDetalhado')?.classList.toggle('is-active', visaoQuantitativo === 'detalhado');
+      document.getElementById('btnQuantConsolidado')?.classList.toggle('is-active', visaoQuantitativo === 'consolidado');
+      if (visaoQuantitativo === 'consolidado') renderPlanilhaConsolidada();
+      else renderPlanilhaDetalhada();
+    }
+
+    function renderPlanilhaDetalhada() {
+      const tbody = document.getElementById('tbodyQuantitativos');
+      const thead = document.getElementById('theadQuantitativos');
+      if (!tbody) return;
+      if (thead) {
+        thead.innerHTML = `<tr>
+          <th>Desenho</th><th>Area</th><th>Tipo</th><th>Material</th><th>Item</th><th>Descricao / evidencia</th><th>Qtd</th><th>Unid.</th><th>Validacao</th><th>Controle</th><th>Titulo</th><th>Rev.</th><th>Arquivo</th>
+        </tr>`;
+      }
+      const base = quantitativos.detalhes || [];
+      const linhas = disciplinaQuantSelecionada ? base.filter(linha => linha.disciplina === disciplinaQuantSelecionada) : base;
+      document.getElementById('planilhaCount').textContent = disciplinaQuantSelecionada
+        ? `${linhas.length} linha(s) - ${disciplinaQuantSelecionada}`
+        : `${linhas.length} linha(s)`;
+      tbody.innerHTML = linhas.length ? linhas.map(linha => {
+        const fonte = nomeArquivo(linha.fonte_arquivo);
+        return `
+          <tr>
+            <td class="doc-quant-cell">
+              <strong>${esc(linha.desenho || linha.documento || '-')}</strong>
+              <span>${fonte ? esc(fonte) : 'PDF nao localizado'}</span>
+            </td>
+            <td>${esc(linha.area || linha.disciplina || '-')}</td>
+            <td>${esc(linha.tipo_controle || '-')}</td>
+            <td>${esc(linha.material || '-')}</td>
+            <td><b>${esc(linha.item || '-')}</b></td>
+            <td class="quant-evidence">
+              ${esc(linha.descricao || linha.evidencia || '-')}
+              ${linha.evidencia && linha.descricao !== linha.evidencia ? `<span class="quant-source">${esc(linha.evidencia)}</span>` : ''}
+            </td>
+            <td class="quant-value">${fmtNumero(linha.quantidade)}</td>
+            <td>${esc(linha.unidade || '-')}</td>
+            <td>
+              <div class="validation-actions">
+                <span class="pill">${esc(linha.status_validacao || '-')}</span>
+                <button class="outline" type="button" onclick="event.stopPropagation(); validarQuantitativoItem(${Number(linha.quantitativo_id)}, 'Validado')">Validar</button>
+                <button class="secondary" type="button" onclick="event.stopPropagation(); validarQuantitativoItem(${Number(linha.quantitativo_id)}, 'Revisar')">Revisar</button>
+              </div>
+            </td>
+            <td><b>${esc(linha.codigo_controle || '-')}</b></td>
+            <td>${esc(linha.titulo || '-')}</td>
+            <td>${esc(linha.revisao || '-')}</td>
+            <td>${esc(fonte || '-')}</td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="13">Nenhum quantitativo detalhado extraido dos documentos.</td></tr>';
+    }
+
+    function renderPlanilhaConsolidada() {
+      const tbody = document.getElementById('tbodyQuantitativos');
+      const thead = document.getElementById('theadQuantitativos');
+      if (!tbody) return;
+      if (thead) {
+        thead.innerHTML = `<tr>
+          <th>Disciplina</th><th>Tipo</th><th>Controle</th><th>Documento</th><th>Qtd extraida</th><th>Unid.</th><th>Evidencia</th><th>Validacao</th><th>Titulo</th><th>Rev.</th><th>Status controle</th><th>Qtd controle</th><th>A4</th><th>Pedido</th><th>Material</th><th>Montagem</th><th>Report</th>
+        </tr>`;
+      }
+      const base = quantitativos.planilha || [];
+      const linhas = disciplinaQuantSelecionada ? base.filter(linha => linha.disciplina === disciplinaQuantSelecionada) : base;
+      document.getElementById('planilhaCount').textContent = disciplinaQuantSelecionada
+        ? `${linhas.length} linha(s) · ${disciplinaQuantSelecionada}`
+        : `${linhas.length} linha(s)`;
+      tbody.innerHTML = linhas.length ? linhas.map(linha => {
+        const temQtd = linha.quantidade_extraida !== null && linha.quantidade_extraida !== undefined && linha.quantidade_extraida !== '';
+        const fonte = nomeArquivo(linha.fonte_arquivo);
+        return `
+          <tr>
+            <td>${esc(linha.disciplina || '-')}</td>
+            <td>${esc(linha.tipo_controle || '-')}</td>
+            <td><b>${esc(linha.codigo_controle || '-')}</b></td>
+            <td class="doc-quant-cell">
+              <strong>${esc(linha.documento || '-')}</strong>
+              <span>Rev. ${esc(linha.revisao || '-')} ${fonte ? `Â· ${esc(fonte)}` : ''}</span>
+            </td>
+            <td class="quant-value">${temQtd ? fmtNumero(linha.quantidade_extraida) : '-'}</td>
+            <td>${esc(linha.unidade_principal || '-')}</td>
+            <td class="quant-evidence">
+              ${linha.evidencia_quantificacao ? esc(linha.evidencia_quantificacao) : 'Sem quantidade extraida deste documento.'}
+              ${fonte ? `<span class="quant-source">${esc(fonte)}</span>` : ''}
+            </td>
+            <td>
+              <div class="validation-actions">
+                <span class="pill">${esc(linha.status_quantificacao || '-')}</span>
+                ${temQtd ? `<button class="outline" type="button" onclick="event.stopPropagation(); validarQuantitativo('${esc(linha.codigo_controle)}', 'Validado')">Validar</button><button class="secondary" type="button" onclick="event.stopPropagation(); validarQuantitativo('${esc(linha.codigo_controle)}', 'Revisar')">Revisar</button>` : ''}
+              </div>
+            </td>
+            <td>${esc(linha.titulo || '-')}</td>
+            <td>${esc(linha.revisao || '-')}</td>
+            <td><span class="pill">${esc(linha.status_controle || '-')}</span></td>
+            <td>${fmtNumero(linha.quantidade_controle ?? 1)}</td>
+            <td>${fmtNumero(linha.a4_equivalente)}</td>
+            <td>${linha.tem_pedido ? 'Sim' : '-'}</td>
+            <td>${linha.tem_material ? 'Sim' : '-'}</td>
+            <td>${linha.tem_montagem ? 'Sim' : '-'}</td>
+            <td>${linha.entrou_medicao_report ? 'Sim' : '-'}</td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="17">Nenhuma linha de controle quantitativo.</td></tr>';
     }
 
     function resumoStatus(lista) {
@@ -433,34 +700,50 @@
       };
     }
 
+    function linhasQuantitativoPorControles(lista, unidade) {
+      return lista.slice(0, 20).map(c => {
+        const linha = (quantitativos.planilha || []).find(q => q.codigo_controle === c.codigo_controle) || {};
+        return `
+          <tr>
+            <td><b>${esc(c.codigo_controle)}</b></td>
+            <td>${esc(c.documento_origem)}</td>
+            <td>${esc(c.revisao_documento || '-')}</td>
+            <td>${esc(unidade)}</td>
+            <td>${fmtNumero(linha.quantidade_controle ?? 1)}</td>
+            <td>${fmtNumero(linha.a4_equivalente)}</td>
+            <td><span class="pill">${esc(c.status_controle || '-')}</span></td>
+          </tr>
+        `;
+      }).join('') || '<tr><td colspan="7">Nenhum controle nesta categoria.</td></tr>';
+    }
+
+    function totalA4Controles(lista) {
+      const codigos = new Set(lista.map(c => c.codigo_controle));
+      return (quantitativos.planilha || [])
+        .filter(q => codigos.has(q.codigo_controle))
+        .reduce((total, q) => total + (Number(q.a4_equivalente) || 0), 0);
+    }
+
     function areaTubosConexoes(lista) {
       const r = resumoStatus(lista);
+      const a4 = totalA4Controles(lista);
       return `
         <article class="area-control">
           <div class="area-control-head">
             <strong>Area: Tubos e conexoes</strong>
-            <span>Linhas, isometricos, spools, metros, peso, DN e soldas.</span>
+            <span>Linhas, isometricos, spools e documentos vinculados. Quantidade fisica detalhada depende da extracao dos PDFs.</span>
           </div>
           <div class="metric-list">
             <div class="metric"><strong>${r.total}</strong><span>controles cadastrados</span></div>
-            <div class="metric"><strong>2</strong><span>itens de tubo no exemplo</span></div>
-            <div class="metric"><strong>7</strong><span>spools no exemplo</span></div>
-            <div class="metric"><strong>22,40 m</strong><span>tubo 6&quot; SCH 40</span></div>
-            <div class="metric"><strong>630,86 kg</strong><span>peso do tubo no IS</span></div>
-            <div class="metric"><strong>722,39 kg</strong><span>peso dos spools</span></div>
+            <div class="metric"><strong>${fmtNumero(a4)}</strong><span>A4 total rastreado</span></div>
+            <div class="metric"><strong>${r.abertos}</strong><span>abertos</span></div>
             <div class="metric"><strong>${r.revisao}</strong><span>em revisao</span></div>
-          </div>
-          <div class="control-note">
-            Peso do tubo vem da lista de materiais do isometrico. Peso dos spools vem do plano de corte/fabricacao e pode incluir trechos montados, ajustes e componentes; por isso nao deve ser somado ao peso do tubo como se fosse outro material.
           </div>
           <div class="control-items">
             <div class="scroll">
               <table>
-                <thead><tr><th>Item controlavel</th><th>Visao</th><th>Unidade</th><th>Qtd atual</th><th>Peso</th><th>Origem</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td><b>6&quot;-GQ-0570-1700-Bc-IQ</b></td><td>Material do isometrico</td><td>m</td><td>22,40</td><td>630,86 kg</td><td>IS-5275.00-2221-200-E6G-001</td><td><span class="pill">Base material</span></td></tr>
-                  <tr><td><b>SPL01 a SPL07</b></td><td>Fabricacao / plano de corte</td><td>un</td><td>7</td><td>722,39 kg</td><td>SP-5275.00-2221-200-E6G-001</td><td><span class="pill">Base fabricacao</span></td></tr>
-                </tbody>
+                <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Unidade</th><th>Qtd controle</th><th>A4</th><th>Status</th></tr></thead>
+                <tbody>${linhasQuantitativoPorControles(lista, 'm')}</tbody>
               </table>
             </div>
           </div>
@@ -470,27 +753,59 @@
 
     function areaSuportesTubulacao(lista) {
       const r = resumoStatus(lista);
+      const a4 = totalA4Controles(lista);
       return `
         <article class="area-control">
           <div class="area-control-head">
             <strong>Area: Suportes</strong>
-            <span>Tags de suporte, apoio, guia, base, grampo, quantidade e linha vinculada.</span>
+            <span>Listas e documentos de suporte vinculados ao controle.</span>
           </div>
           <div class="metric-list">
             <div class="metric"><strong>${r.total}</strong><span>controles cadastrados</span></div>
-            <div class="metric"><strong>33</strong><span>tags detectadas nos PDFs</span></div>
-            <div class="metric"><strong>2</strong><span>suportes no exemplo</span></div>
-            <div class="metric"><strong>PS</strong><span>padrao principal</span></div>
-            <div class="metric"><strong>BA/GI/GR</strong><span>outros tipos</span></div>
+            <div class="metric"><strong>${fmtNumero(a4)}</strong><span>A4 total rastreado</span></div>
+            <div class="metric"><strong>${r.abertos}</strong><span>abertos</span></div>
             <div class="metric"><strong>${r.revisao}</strong><span>em revisao</span></div>
           </div>
           <div class="control-items">
             <div class="scroll">
               <table>
-                <thead><tr><th>Item controlavel</th><th>Tipo</th><th>Qtd atual</th><th>Linha vinculada</th><th>Origem</th><th>Status</th></tr></thead>
+                <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Unidade</th><th>Qtd controle</th><th>A4</th><th>Status</th></tr></thead>
+                <tbody>${linhasQuantitativoPorControles(lista, 'un')}</tbody>
+              </table>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function areaCivilControle(titulo, lista, descricao, unidade) {
+      const r = resumoStatus(lista);
+      return `
+        <article class="area-control">
+          <div class="area-control-head">
+            <strong>Area: ${esc(titulo)}</strong>
+            <span>${esc(descricao)}</span>
+          </div>
+          <div class="metric-list">
+            <div class="metric"><strong>${r.total}</strong><span>controles cadastrados</span></div>
+            <div class="metric"><strong>${esc(unidade)}</strong><span>unidade principal</span></div>
+            <div class="metric"><strong>${r.abertos}</strong><span>abertos</span></div>
+            <div class="metric"><strong>${r.revisao}</strong><span>em revisao</span></div>
+          </div>
+          <div class="control-items">
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Controle</th><th>Documento</th><th>Rev.</th><th>Status</th><th>Area</th></tr></thead>
                 <tbody>
-                  <tr><td><b>PS-0570-026</b></td><td>Suporte</td><td>1 un</td><td>6&quot;-GQ-0570-1700-Bc-IQ</td><td>IS-001 / LI-293</td><td><span class="pill">Exemplo</span></td></tr>
-                  <tr><td><b>PS-0570-033</b></td><td>Suporte</td><td>1 un</td><td>6&quot;-GQ-0570-1700-Bc-IQ</td><td>IS-001 / LI-293</td><td><span class="pill">Exemplo</span></td></tr>
+                  ${lista.slice(0, 12).map(c => `
+                    <tr>
+                      <td><b>${esc(c.codigo_controle)}</b></td>
+                      <td>${esc(c.documento_origem)}</td>
+                      <td>${esc(c.revisao_documento || '-')}</td>
+                      <td><span class="pill">${esc(c.status_controle || '-')}</span></td>
+                      <td>${esc(c.area || '-')}</td>
+                    </tr>
+                  `).join('') || '<tr><td colspan="5">Nenhum controle nesta categoria ainda.</td></tr>'}
                 </tbody>
               </table>
             </div>
@@ -523,7 +838,25 @@
       document.getElementById('tabControle').classList.toggle('is-active', activeView === 'controle');
       document.getElementById('pageTitle').textContent = activeView === 'controle' ? 'Controle' : 'Novos Documentos';
       renderControlesAgrupados();
+      aplicarModoControle();
       atualizarResumoTopo();
+    }
+
+    function aplicarModoControle() {
+      const tabela = document.getElementById('tabelaQuantitativos');
+      const cards = document.getElementById('controleHierarquia');
+      const btnTabela = document.getElementById('btnModoTabela');
+      const btnControle = document.getElementById('btnModoControle');
+      if (!tabela || !cards) return;
+      tabela.classList.toggle('hidden', controleModo !== 'tabela');
+      cards.classList.toggle('hidden', controleModo !== 'controle');
+      btnTabela?.classList.toggle('is-active', controleModo === 'tabela');
+      btnControle?.classList.toggle('is-active', controleModo === 'controle');
+    }
+
+    function trocarModoControle(modo) {
+      controleModo = modo;
+      aplicarModoControle();
     }
 
     function atualizarResumoTopo() {
@@ -857,6 +1190,12 @@
       const disciplina = String(doc?.disciplina || '').toUpperCase();
       if (/^LI-.*-293-/.test(codigo) || titulo.includes('SUPORTE') || titulo.includes('SUPORTES')) return 'Tubulacao - Suportes';
       if (/^(IS|SP)-/.test(codigo) || /-[^-]*-200-/.test(codigo) || titulo.includes('ISOMETR') || titulo.includes('SPOOL') || disciplina.includes('TUBULA')) return 'Tubulacao - Tubos e conexoes';
+      if (disciplina.includes('CIVIL') || titulo.includes('CONCRETO') || titulo.includes('ARMADURA') || titulo.includes('ARMACAO') || titulo.includes('METALICA')) {
+        if (titulo.includes('ARMADURA') || titulo.includes('ARMACAO') || titulo.includes('FORMAS E ARMADURAS') || titulo.includes('FORMA E ARM')) return 'Construcao civil - Armadura';
+        if (titulo.includes('METALICA') || titulo.includes('ESTRUTURA METAL') || titulo.includes('PLATAFORMA')) return 'Construcao civil - Estrutura metalica';
+        if (titulo.includes('CONCRETO') || titulo.includes('FUNDA') || titulo.includes('BASE') || titulo.includes('BLOCO')) return 'Construcao civil - m3 de concreto';
+        return 'Construcao civil - Geral';
+      }
       return 'Quantitativo geral';
     }
 
@@ -919,6 +1258,7 @@
         }
         lote.forEach(d => docsSelecionados.delete(d.codigo_documento));
         await carregarControles();
+        await carregarQuantitativos();
         cancelarControle();
         await carregar();
         alert(`${lote.length} documento(s) classificados.`);
@@ -935,9 +1275,27 @@
         return alert('Erro ao vincular controle: ' + e.message);
       }
       await carregarControles();
+      await carregarQuantitativos();
       cancelarControle();
       await carregar();
       alert('Documento classificado.');
+    }
+
+    async function classificarPendentes() {
+      const fonte = sourceMode === 'ld' ? 'ld' : 'sigem';
+      const label = fonte === 'ld' ? 'documentos da LD ainda sem controle' : 'documentos SIGEM emitidos/postados ainda sem controle';
+      if (!confirm(`Classificar automaticamente ${label}? Documentos ja classificados serao mantidos.`)) return;
+      const res = await fetch(`${API}/revisoes/controles/classificar-pendentes?fonte=${encodeURIComponent(fonte)}`, {
+        method: 'POST'
+      });
+      if (!res.ok) return alert('Erro ao classificar pendentes: ' + await res.text());
+      const data = await res.json();
+      await carregarControles();
+      await carregarQuantitativos();
+      await carregarDocs();
+      await carregarSigemDocs();
+      await carregar();
+      alert(`${data.criados} controle(s) criado(s). ${data.ignorados_ja_classificados} documento(s) ja estavam classificados.`);
     }
 
     async function carregar() {
@@ -1047,13 +1405,25 @@
     document.getElementById('btnSelecionarVisiveis').onclick = selecionarVisiveis;
     document.getElementById('btnLimparSelecao').onclick = limparSelecao;
     document.getElementById('btnClassificarSelecionados').onclick = classificarSelecionados;
+    document.getElementById('btnClassificarPendentes').onclick = classificarPendentes;
+    document.getElementById('btnAtualizarQuantitativos').onclick = carregarQuantitativos;
+    document.getElementById('btnModoTabela').onclick = () => trocarModoControle('tabela');
+    document.getElementById('btnModoControle').onclick = () => trocarModoControle('controle');
+    document.getElementById('btnQuantDetalhado').onclick = () => {
+      visaoQuantitativo = 'detalhado';
+      renderPlanilhaQuantitativos();
+    };
+    document.getElementById('btnQuantConsolidado').onclick = () => {
+      visaoQuantitativo = 'consolidado';
+      renderPlanilhaQuantitativos();
+    };
     document.getElementById('tabSigem').onclick = () => trocarFonte('sigem');
     document.getElementById('tabLdManual').onclick = () => trocarFonte('ld');
     window.addEventListener('popstate', aplicarView);
     document.getElementById('tipoControle').onchange = () => {
       incluiQuantitativo = document.getElementById('tipoControle').value !== 'Sem quantitativo';
     };
-    Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles()]).then(() => {
+    Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles(), carregarQuantitativos()]).then(() => {
       aplicarView();
       return carregar();
     }).catch(e => {

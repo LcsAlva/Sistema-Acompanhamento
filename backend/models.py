@@ -1073,6 +1073,25 @@ class ControleDocumento(Base):
     atualizado_em = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class ControleQuantitativo(Base):
+    """Item quantitativo extraido do documento tecnico vinculado ao controle."""
+    __tablename__ = "controle_quantitativos"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    controle_id = Column(Integer, ForeignKey("controles_documento.id"), nullable=False, index=True)
+    codigo_controle = Column(String, nullable=False, index=True)
+    documento_origem = Column(String, nullable=False, index=True)
+    item = Column(String)
+    descricao = Column(Text)
+    unidade = Column(String, nullable=False, index=True)
+    quantidade = Column(Float, nullable=False)
+    fonte_arquivo = Column(Text)
+    evidencia = Column(Text)
+    status_validacao = Column(String, default="Extraido automaticamente - revisar", index=True)
+    criado_em = Column(DateTime, server_default=func.now())
+    atualizado_em = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
 class EventoRevisaoDocumento(Base):
     """Evento gerado quando uma revisao nova substitui revisao anterior."""
     __tablename__ = "eventos_revisao_documento"
