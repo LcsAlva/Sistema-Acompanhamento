@@ -176,6 +176,16 @@
     .quick-filters button.is-active { background: #0f4c81; color: #fff; border-color: #0f4c81; }
     .grouped-control { margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
     .grouped-control h3 { margin: 0; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+    .import-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px; border: 1px solid #dbeafe; border-radius: 8px; background: #f8fbff; }
+    .import-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .material-filters { display: grid; grid-template-columns: repeat(7, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+    .material-filters input, .material-filters select { width: 100%; }
+    .material-kpis { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+    .material-kpi { padding: 11px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+    .material-kpi strong { display: block; color: #0f172a; font-size: 18px; }
+    .material-kpi span { color: #64748b; font-size: 11px; }
+    .status-ok { color: #166534; background: #dcfce7; }
+    .status-check { color: #92400e; background: #fffbeb; border-color: #fde68a; }
     .sheet-title span { color: #64748b; font-size: 12px; }
     #formControleBox { scroll-margin-top: 170px; }
     @media (max-width: 640px) {
@@ -229,18 +239,11 @@
         </div>
       </header>
       <nav class="module-tabs" aria-label="Navegacao de Engenharia">
-        <a class="module-tab" href="/integracao-ld">Documentos</a>
+        <a class="module-tab is-active" href="/integracao-ld">Documentos</a>
         <a class="module-tab" href="/conciliacao-sigem">Status SIGEM</a>
         <a class="module-tab" href="/motor-medicao">Medicao Engenharia</a>
-        <a class="module-tab is-active" id="tabNovosDocumentos" href="/analise-revisoes">Novos Documentos</a>
-        <a class="module-tab" id="tabPendentes" href="/analise-revisoes?view=pendentes">Pendentes de Classificacao</a>
-        <a class="module-tab" id="tabClassificados" href="/analise-revisoes?view=classificados">Documentos Classificados</a>
-        <a class="module-tab" id="tabControleCompleto" href="/analise-revisoes?view=controle-completo">Controle Completo</a>
-        <a class="module-tab" id="tabControle" href="/analise-revisoes?view=controle">Quantitativos</a>
-        <a class="module-tab" id="tabRevisoes" href="/analise-revisoes?view=revisoes">Revisoes / Impactos</a>
-        <a class="module-tab" id="tabReport" href="/analise-revisoes?view=report">Report Documental</a>
       </nav>
-  <main>
+  <main class="hidden">
     <h1 class="page-title" id="pageTitle">Novos Documentos</h1>
     <div class="sub" id="resumo">Carregando...</div>
 
@@ -429,49 +432,52 @@
     </section>
 
     <section class="block hidden" id="controleView">
-      <h2>Controle por disciplina</h2>
-      <div class="sub">Visao organizada por disciplina, area de controle e quantitativos. Os documentos ficam como origem do dado, nao como a lista principal da tela.</div>
-      <div class="mode-bar">
-        <div class="sub">Escolha entre a planilha consolidada e os controles agrupados por disciplina.</div>
-        <div class="quant-toggle">
-          <button id="btnModoTabela" class="is-active" type="button">Tabela</button>
-          <button id="btnModoControle" type="button">Controle</button>
+      <h2>Quantitativos</h2>
+      <div class="sub">Consulta unica dos materiais quantificados dos isometricos importados da aba Material por ISO.</div>
+      <div class="import-card">
+        <div>
+          <strong>Importar planilha de quantitativos</strong>
+          <div class="sub" id="materialImportInfo">Nenhum arquivo importado nesta maquina.</div>
+        </div>
+        <div class="import-actions">
+          <input id="arquivoQuantitativos" type="file" accept=".xlsx,.xlsm,.xls" class="hidden">
+          <button id="btnImportarQuantitativos" type="button">Importar Excel</button>
+          <button class="outline" id="btnExportarQuantitativos" type="button">Exportar Excel</button>
+          <button class="secondary" id="btnLimparFiltrosMateriais" type="button">Limpar filtros</button>
         </div>
       </div>
-      <div id="tabelaQuantitativos">
-        <div class="sheet-toolbar">
+      <div class="material-kpis">
+        <div class="material-kpi"><strong id="kpiMaterialItens">0</strong><span>Total de itens</span></div>
+        <div class="material-kpi"><strong id="kpiMaterialPeso">0</strong><span>Peso total kg</span></div>
+        <div class="material-kpi"><strong id="kpiMaterialTubos">0</strong><span>Comprimento total de tubos em metros</span></div>
+        <div class="material-kpi"><strong id="kpiMaterialPendencias">0</strong><span>Itens com pendencia/verificacao</span></div>
+      </div>
+      <div class="material-filters">
+        <input id="matBusca" placeholder="Buscar material, codigo, NM, linha...">
+        <select id="matIso"><option value="">Todos isometricos</option></select>
+        <select id="matLinha"><option value="">Todas linhas</option></select>
+        <select id="matCategoria"><option value="">Todas categorias</option></select>
+        <select id="matCodigo"><option value="">Todos codigos</option></select>
+        <select id="matNm"><option value="">Todos NM</option></select>
+        <select id="matStatus"><option value="">Todos status</option></select>
+      </div>
+      <div class="sheet-wrap">
+        <div class="sheet-title">
           <div>
-            <h2 style="margin:0">Resumo por disciplina</h2>
-            <div class="sub">Totais de controles, documentos, tipos, A4 e pendencias operacionais.</div>
+            <h3>Materiais por isometrico</h3>
+            <span>Tabela unica importada da planilha, sem consolidar nem agrupar linhas.</span>
           </div>
-          <button class="outline" id="btnAtualizarQuantitativos" type="button">Atualizar quantitativos</button>
+          <span id="materialCount" class="count">0 linha(s)</span>
         </div>
-        <div id="resumoDisciplinas" class="summary-grid"></div>
-        <div class="sheet-wrap">
-          <div class="sheet-title">
-            <div>
-              <h3>Planilha de controles quantitativos</h3>
-              <span>Base rastreavel por desenho, item extraido, area, material quando identificado no documento, evidencia e validacao.</span>
-            </div>
-            <div class="sheet-mode-actions">
-              <button id="btnQuantDetalhado" class="is-active" type="button">Detalhado</button>
-              <button id="btnQuantConsolidado" type="button">Consolidado</button>
-              <span id="planilhaCount" class="count">0 linha(s)</span>
-            </div>
-          </div>
-          <div class="scroll">
-            <table>
-              <thead id="theadQuantitativos">
-                <tr>
-                  <th>Disciplina</th><th>Tipo</th><th>Controle</th><th>Documento</th><th>Qtd extraida</th><th>Unid.</th><th>Evidencia</th><th>Validacao</th><th>Titulo</th><th>Rev.</th><th>Status controle</th><th>Qtd controle</th><th>A4</th><th>Pedido</th><th>Material</th><th>Montagem</th><th>Report</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyQuantitativos"></tbody>
-            </table>
-          </div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr><th>Isometrico</th><th>Linha</th><th>Folha / Pagina</th><th>Categoria</th><th>PT / Item</th><th>Descricao do material</th><th>DN / Dimensao</th><th>Quantidade</th><th>Unidade</th><th>Peso kg</th><th>NM</th><th>Codigo</th><th>Observacao</th><th>Status / Verificacao</th></tr>
+            </thead>
+            <tbody id="tbodyMateriaisIso"></tbody>
+          </table>
         </div>
       </div>
-      <div id="controleHierarquia" class="control-hierarchy hidden"></div>
     </section>
 
     <div class="toolbar">
@@ -527,6 +533,8 @@
     let visaoQuantitativo = 'detalhado';
     let modoControleCompleto = 'resumido';
     let quickControleCompleto = '';
+    let materiaisIso = [];
+    let materialImportMeta = null;
     let disciplinaQuantSelecionada = '';
     const disciplinasRecolhidas = new Set();
     const tiposRecolhidos = new Set();
@@ -536,6 +544,255 @@
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const fmtNumero = (v) => (v === null || v === undefined || v === '') ? '-' : Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
     const nomeArquivo = (caminho) => String(caminho || '').split(/[\\/]/).filter(Boolean).pop() || caminho || '';
+    const MATERIAL_STORAGE_KEY = 'engenharia.quantitativos.material_por_iso.v1';
+    const MATERIAL_COLUMNS = [
+      ['isometrico', 'Isometrico'],
+      ['linha', 'Linha'],
+      ['folhaPagina', 'Folha / Pagina'],
+      ['categoria', 'Categoria'],
+      ['itemPt', 'PT / Item'],
+      ['descricao', 'Descricao do material'],
+      ['dn', 'DN / Dimensao'],
+      ['quantidade', 'Quantidade'],
+      ['unidade', 'Unidade'],
+      ['pesoKg', 'Peso kg'],
+      ['nm', 'NM'],
+      ['codigo', 'Codigo'],
+      ['observacao', 'Observacao'],
+      ['statusVerificacao', 'Status / Verificacao'],
+    ];
+
+    function normalizarCabecalho(v) {
+      return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    }
+
+    function valorCelula(v) {
+      return typeof v === 'string' ? v.trim() : v;
+    }
+
+    function numeroOuOriginal(v) {
+      if (v === null || v === undefined || v === '') return '';
+      if (typeof v === 'number') return Number.isFinite(v) ? v : '';
+      const texto = String(v).trim();
+      if (!texto) return '';
+      const normal = texto.replace(/\s+/g, '').replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.');
+      const n = Number(normal);
+      return Number.isFinite(n) ? n : texto;
+    }
+
+    function numeroValido(v) {
+      return typeof v === 'number' && Number.isFinite(v);
+    }
+
+    function textoContem(v, termo) {
+      return normalizarCabecalho(v).includes(termo);
+    }
+
+    function avaliarStatusMaterial(row) {
+      const motivos = [];
+      if (!String(row.codigo || '').trim()) motivos.push('Codigo vazio');
+      if (!String(row.nm || '').trim()) motivos.push('NM vazio');
+      if (textoContem(row.nm, 'falta')) motivos.push('NM indicado como falta');
+      if (!numeroValido(row.pesoKg)) motivos.push('Peso nao numerico/vazio');
+      if (!numeroValido(row.quantidade)) motivos.push('Quantidade nao numerica/vazia');
+      if (!String(row.descricao || '').trim()) motivos.push('Descricao nao capturada');
+      if (textoContem(row.statusOriginal, 'pendente') || textoContem(row.statusOriginal, 'a verificar')) motivos.push('Status original pendente');
+      if (textoContem(row.observacao, 'falta') || textoContem(row.observacao, 'pendente') || textoContem(row.observacao, 'a verificar')) motivos.push('Observacao indica pendencia');
+      if (motivos.length) {
+        row.statusVerificacao = 'A verificar';
+        if (!String(row.observacao || '').trim()) row.observacao = motivos[0];
+      } else {
+        row.statusVerificacao = String(row.statusOriginal || '').trim() || 'OK';
+      }
+      return row;
+    }
+
+    async function carregarXlsx() {
+      const mod = await import('/assets/xlsx.min-B2DsA94h.js');
+      return mod.default || window.XLSX;
+    }
+
+    function detectarAbaMaterial(workbook, XLSX) {
+      if (workbook.Sheets['Material por ISO']) return 'Material por ISO';
+      const esperados = ['documento','linha','folha iso','pagina pdf','item pt','categoria','descricao','dn (pol)','qtd original','qtd num','unidade','peso kg','nm','codigo','status','observacao'];
+      for (const nome of workbook.SheetNames) {
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[nome], { header: 1, defval: '' });
+        const headers = (rows[0] || []).map(normalizarCabecalho);
+        const encontrados = esperados.filter(h => headers.includes(h)).length;
+        if (encontrados >= 12) return nome;
+      }
+      return null;
+    }
+
+    function linhasMaterialDaAba(sheet, XLSX) {
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      const headers = (rows[0] || []).map(normalizarCabecalho);
+      const idx = (nome) => headers.indexOf(normalizarCabecalho(nome));
+      const col = {
+        documento: idx('Documento'), linha: idx('Linha'), folha: idx('Folha ISO'), pagina: idx('Pagina PDF'),
+        item: idx('Item PT'), categoria: idx('Categoria'), descricao: idx('Descricao'), dn: idx('DN (pol)'),
+        qtd: idx('QTD num'), unidade: idx('Unidade'), peso: idx('Peso kg'), nm: idx('NM'),
+        codigo: idx('Codigo'), status: idx('Status'), obs: idx('Observacao')
+      };
+      if ([col.documento, col.linha, col.item, col.categoria, col.descricao, col.qtd, col.unidade, col.peso, col.nm, col.codigo, col.status].some(v => v < 0)) {
+        throw new Error('Nao foi encontrada uma aba compativel com o modelo de quantitativos.');
+      }
+      return rows.slice(1).filter(row => row.some(v => String(v ?? '').trim())).map(row => {
+        const folha = valorCelula(row[col.folha]);
+        const pagina = valorCelula(row[col.pagina]);
+        const folhaPagina = [folha, pagina !== '' && pagina !== null && pagina !== undefined ? `pag. ${pagina}` : ''].filter(Boolean).join(' / ');
+        const item = {
+          isometrico: valorCelula(row[col.documento]) || '',
+          linha: valorCelula(row[col.linha]) || '',
+          folhaPagina,
+          categoria: valorCelula(row[col.categoria]) || '',
+          itemPt: valorCelula(row[col.item]) || '',
+          descricao: valorCelula(row[col.descricao]) || '',
+          dn: valorCelula(row[col.dn]) || '',
+          quantidade: numeroOuOriginal(row[col.qtd]),
+          unidade: valorCelula(row[col.unidade]) || '',
+          pesoKg: numeroOuOriginal(row[col.peso]),
+          nm: valorCelula(row[col.nm]) || '',
+          codigo: valorCelula(row[col.codigo]) || '',
+          observacao: valorCelula(row[col.obs]) || '',
+          statusOriginal: valorCelula(row[col.status]) || '',
+          statusVerificacao: '',
+        };
+        return avaliarStatusMaterial(item);
+      });
+    }
+
+    function salvarMateriaisIso(nomeArquivoImportado, aba) {
+      materialImportMeta = { arquivo: nomeArquivoImportado, aba, importadoEm: new Date().toISOString() };
+      localStorage.setItem(MATERIAL_STORAGE_KEY, JSON.stringify({ meta: materialImportMeta, linhas: materiaisIso }));
+    }
+
+    function carregarMateriaisSalvos() {
+      try {
+        const data = JSON.parse(localStorage.getItem(MATERIAL_STORAGE_KEY) || '{}');
+        materiaisIso = Array.isArray(data.linhas) ? data.linhas : [];
+        materialImportMeta = data.meta || null;
+      } catch {
+        materiaisIso = [];
+        materialImportMeta = null;
+      }
+      preencherFiltrosMateriais();
+      renderMateriaisIso();
+    }
+
+    function materiaisFiltrados() {
+      let linhas = [...materiaisIso];
+      const filtros = [
+        ['matIso', 'isometrico'],
+        ['matLinha', 'linha'],
+        ['matCategoria', 'categoria'],
+        ['matCodigo', 'codigo'],
+        ['matNm', 'nm'],
+        ['matStatus', 'statusVerificacao'],
+      ];
+      filtros.forEach(([id, campo]) => {
+        const valor = document.getElementById(id)?.value || '';
+        if (valor) linhas = linhas.filter(l => String(l[campo] || '') === valor);
+      });
+      const busca = (document.getElementById('matBusca')?.value || '').toLowerCase().trim();
+      if (busca) {
+        linhas = linhas.filter(l => [l.isometrico, l.linha, l.descricao, l.codigo, l.nm, l.categoria, l.dn].join(' ').toLowerCase().includes(busca));
+      }
+      return linhas;
+    }
+
+    function preencherFiltrosMateriais() {
+      const configs = [
+        ['matIso', 'isometrico', 'Todos isometricos'],
+        ['matLinha', 'linha', 'Todas linhas'],
+        ['matCategoria', 'categoria', 'Todas categorias'],
+        ['matCodigo', 'codigo', 'Todos codigos'],
+        ['matNm', 'nm', 'Todos NM'],
+        ['matStatus', 'statusVerificacao', 'Todos status'],
+      ];
+      configs.forEach(([id, campo, label]) => opcoesSelect(id, materiaisIso.map(l => l[campo]), label));
+    }
+
+    function textoNumero(v) {
+      return numeroValido(v) ? v.toLocaleString('pt-BR', { maximumFractionDigits: 3 }) : esc(v || '');
+    }
+
+    function renderMateriaisIso() {
+      const linhas = materiaisFiltrados();
+      const tbody = document.getElementById('tbodyMateriaisIso');
+      if (!tbody) return;
+      const peso = linhas.reduce((total, l) => total + (numeroValido(l.pesoKg) ? l.pesoKg : 0), 0);
+      const tubosM = linhas.reduce((total, l) => total + (normalizarCabecalho(l.categoria) === 'tubo' && normalizarCabecalho(l.unidade) === 'm' && numeroValido(l.quantidade) ? l.quantidade : 0), 0);
+      const pendencias = linhas.filter(l => normalizarCabecalho(l.statusVerificacao) !== 'ok').length;
+      document.getElementById('kpiMaterialItens').textContent = fmtNumero(linhas.length);
+      document.getElementById('kpiMaterialPeso').textContent = fmtNumero(peso);
+      document.getElementById('kpiMaterialTubos').textContent = fmtNumero(tubosM);
+      document.getElementById('kpiMaterialPendencias').textContent = fmtNumero(pendencias);
+      document.getElementById('materialCount').textContent = `${linhas.length} linha(s)`;
+      document.getElementById('materialImportInfo').textContent = materialImportMeta
+        ? `${materiaisIso.length} item(ns) importados de ${materialImportMeta.arquivo} | aba ${materialImportMeta.aba}`
+        : 'Nenhum arquivo importado nesta maquina.';
+      tbody.innerHTML = linhas.length ? linhas.map(l => {
+        const ok = normalizarCabecalho(l.statusVerificacao) === 'ok';
+        return `<tr>
+          <td><b>${esc(l.isometrico)}</b></td>
+          <td>${esc(l.linha)}</td>
+          <td>${esc(l.folhaPagina)}</td>
+          <td>${esc(l.categoria)}</td>
+          <td>${esc(l.itemPt)}</td>
+          <td class="quant-evidence">${esc(l.descricao)}</td>
+          <td>${esc(l.dn)}</td>
+          <td>${textoNumero(l.quantidade)}</td>
+          <td>${esc(l.unidade)}</td>
+          <td>${textoNumero(l.pesoKg)}</td>
+          <td>${esc(l.nm)}</td>
+          <td>${esc(l.codigo)}</td>
+          <td class="quant-evidence">${esc(l.observacao || '-')}</td>
+          <td><span class="pill ${ok ? 'status-ok' : 'status-check'}">${esc(l.statusVerificacao || '-')}</span></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="14">Importe uma planilha Excel para visualizar os quantitativos.</td></tr>';
+    }
+
+    async function importarQuantitativosArquivo(file) {
+      if (!file) return;
+      if (materiaisIso.length && !confirm('Ja existem quantitativos importados. Deseja substituir pelos dados do novo arquivo?')) return;
+      try {
+        const XLSX = await carregarXlsx();
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const aba = detectarAbaMaterial(workbook, XLSX);
+        if (!aba) throw new Error('Nao foi encontrada uma aba compativel com o modelo de quantitativos.');
+        materiaisIso = linhasMaterialDaAba(workbook.Sheets[aba], XLSX);
+        salvarMateriaisIso(file.name, aba);
+        preencherFiltrosMateriais();
+        renderMateriaisIso();
+        alert(`${materiaisIso.length} linha(s) importada(s) da aba ${aba}.`);
+      } catch (e) {
+        alert(e.message || 'Erro ao importar planilha de quantitativos.');
+      } finally {
+        const input = document.getElementById('arquivoQuantitativos');
+        if (input) input.value = '';
+      }
+    }
+
+    async function exportarMateriaisIso() {
+      const linhas = materiaisFiltrados();
+      if (!linhas.length) return alert('Nao ha linhas para exportar.');
+      const XLSX = await carregarXlsx();
+      const data = linhas.map(l => Object.fromEntries(MATERIAL_COLUMNS.map(([key, label]) => [label, l[key] ?? ''])));
+      const ws = XLSX.utils.json_to_sheet(data, { header: MATERIAL_COLUMNS.map(([, label]) => label) });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Material por ISO');
+      XLSX.writeFile(wb, 'quantitativos_isometricos_export.xlsx');
+    }
+
+    function limparFiltrosMateriais() {
+      ['matBusca','matIso','matLinha','matCategoria','matCodigo','matNm','matStatus'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      renderMateriaisIso();
+    }
 
     async function carregarDocs() {
       const res = await fetch(`${API}/ld/documentos`);
@@ -950,13 +1207,13 @@
       document.getElementById('controleView').classList.toggle('hidden', activeView !== 'controle');
       document.querySelector('.toolbar').classList.toggle('hidden', activeView !== 'revisoes');
       document.querySelector('.layout').classList.toggle('hidden', activeView !== 'revisoes');
-      document.getElementById('tabNovosDocumentos').classList.toggle('is-active', activeView === 'novos');
-      document.getElementById('tabPendentes').classList.toggle('is-active', activeView === 'pendentes');
-      document.getElementById('tabClassificados').classList.toggle('is-active', activeView === 'classificados');
-      document.getElementById('tabControleCompleto').classList.toggle('is-active', activeView === 'controle-completo');
-      document.getElementById('tabControle').classList.toggle('is-active', activeView === 'controle');
-      document.getElementById('tabRevisoes').classList.toggle('is-active', activeView === 'revisoes');
-      document.getElementById('tabReport').classList.toggle('is-active', activeView === 'report');
+      document.getElementById('tabNovosDocumentos')?.classList.toggle('is-active', activeView === 'novos');
+      document.getElementById('tabPendentes')?.classList.toggle('is-active', activeView === 'pendentes');
+      document.getElementById('tabClassificados')?.classList.toggle('is-active', activeView === 'classificados');
+      document.getElementById('tabControleCompleto')?.classList.toggle('is-active', activeView === 'controle-completo');
+      document.getElementById('tabControle')?.classList.toggle('is-active', activeView === 'controle');
+      document.getElementById('tabRevisoes')?.classList.toggle('is-active', activeView === 'revisoes');
+      document.getElementById('tabReport')?.classList.toggle('is-active', activeView === 'report');
       document.getElementById('pageTitle').textContent = ({
         novos: 'Novos Documentos',
         pendentes: 'Pendentes de Classificacao',
@@ -1702,17 +1959,25 @@
     document.getElementById('btnLimparSelecao').onclick = limparSelecao;
     document.getElementById('btnClassificarSelecionados').onclick = classificarSelecionados;
     document.getElementById('btnClassificarPendentes').onclick = classificarPendentes;
-    document.getElementById('btnAtualizarQuantitativos').onclick = carregarQuantitativos;
-    document.getElementById('btnModoTabela').onclick = () => trocarModoControle('tabela');
-    document.getElementById('btnModoControle').onclick = () => trocarModoControle('controle');
-    document.getElementById('btnQuantDetalhado').onclick = () => {
+    if (document.getElementById('btnAtualizarQuantitativos')) document.getElementById('btnAtualizarQuantitativos').onclick = carregarQuantitativos;
+    if (document.getElementById('btnModoTabela')) document.getElementById('btnModoTabela').onclick = () => trocarModoControle('tabela');
+    if (document.getElementById('btnModoControle')) document.getElementById('btnModoControle').onclick = () => trocarModoControle('controle');
+    if (document.getElementById('btnQuantDetalhado')) document.getElementById('btnQuantDetalhado').onclick = () => {
       visaoQuantitativo = 'detalhado';
       renderPlanilhaQuantitativos();
     };
-    document.getElementById('btnQuantConsolidado').onclick = () => {
+    if (document.getElementById('btnQuantConsolidado')) document.getElementById('btnQuantConsolidado').onclick = () => {
       visaoQuantitativo = 'consolidado';
       renderPlanilhaQuantitativos();
     };
+    document.getElementById('btnImportarQuantitativos').onclick = () => document.getElementById('arquivoQuantitativos').click();
+    document.getElementById('arquivoQuantitativos').onchange = e => importarQuantitativosArquivo(e.target.files?.[0]);
+    document.getElementById('btnExportarQuantitativos').onclick = exportarMateriaisIso;
+    document.getElementById('btnLimparFiltrosMateriais').onclick = limparFiltrosMateriais;
+    ['matBusca','matIso','matLinha','matCategoria','matCodigo','matNm','matStatus'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.oninput = el.onchange = renderMateriaisIso;
+    });
     ['buscaClassificados','filtroControleClassificados','filtroAreaClassificados','filtroStatusClassificados'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.oninput = el.onchange = renderClassificados;
@@ -1736,6 +2001,7 @@
     document.getElementById('tipoControle').onchange = () => {
       incluiQuantitativo = document.getElementById('tipoControle').value !== 'Sem quantitativo';
     };
+    carregarMateriaisSalvos();
     Promise.all([carregarDocs(), carregarSigemDocs(), carregarControles(), carregarQuantitativos(), carregarControleCompleto()]).then(() => {
       aplicarView();
       return carregar();

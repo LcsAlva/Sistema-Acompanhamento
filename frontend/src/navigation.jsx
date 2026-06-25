@@ -46,8 +46,6 @@ export function buildNavigation({ codigo, ano, mes }) {
         { label: 'Documentos', to: '/integracao-ld', match: ['/integracao-ld', '/documentos'] },
         { label: 'Status SIGEM', to: '/conciliacao-sigem', match: '/conciliacao-sigem' },
         { label: 'Medi\u00e7\u00e3o Engenharia', to: '/motor-medicao', match: '/motor-medicao' },
-        { label: 'Novos Documentos', to: '/analise-revisoes', match: '/analise-revisoes' },
-        { label: 'Controle', to: '/analise-revisoes?view=controle', match: '/analise-revisoes?view=controle' },
       ],
     },
     {
